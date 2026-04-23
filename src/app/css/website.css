@@ -1,0 +1,69 @@
+/* src/app/css/website.css */
+/* Custom styles for the website/landing page */
+
+@tailwind utilities;
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400;
+  }
+
+  .bg-gradient-blue {
+    @apply bg-gradient-to-r from-blue-600 to-blue-500;
+  }
+
+  .bg-gradient-teal {
+    @apply bg-gradient-to-r from-teal-600 to-teal-500;
+  }
+
+  .bg-gradient-purple {
+    @apply bg-gradient-to-r from-purple-600 to-purple-500;
+  }
+
+  .bg-gradient-indigo {
+    @apply bg-gradient-to-r from-indigo-600 to-indigo-500;
+  }
+
+  /* Custom positioning utilities for decorative elements */
+  .left-1\/10 {
+    left: 10%;
+  }
+  
+  .left-3\/10 {
+    left: 30%;
+  }
+  
+  .left-7\/10 {
+    left: 70%;
+  }
+  
+  .left-9\/10 {
+    left: 90%;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Markdown content styling */
+.markdown strong {
+  @apply font-bold text-blue-800;
+}
+
+.markdown p {
+  @apply mb-2;
+}

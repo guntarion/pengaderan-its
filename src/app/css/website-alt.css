@@ -1,0 +1,71 @@
+/* src/app/css/website-alt.css */
+/* Custom styles for the website/landing page - alternative version without @layer */
+
+/* Text gradient utility */
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(to right, #2563eb, #60a5fa);
+}
+
+/* Background gradients */
+.bg-gradient-blue {
+  background-image: linear-gradient(to right, #2563eb, #3b82f6);
+}
+
+.bg-gradient-teal {
+  background-image: linear-gradient(to right, #0d9488, #14b8a6);
+}
+
+.bg-gradient-purple {
+  background-image: linear-gradient(to right, #7c3aed, #a855f7);
+}
+
+.bg-gradient-indigo {
+  background-image: linear-gradient(to right, #4f46e5, #6366f1);
+}
+
+/* Custom positioning utilities for decorative elements */
+.left-1\/10 {
+  left: 10%;
+}
+
+.left-3\/10 {
+  left: 30%;
+}
+
+.left-7\/10 {
+  left: 70%;
+}
+
+.left-9\/10 {
+  left: 90%;
+}
+
+/* Custom animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Markdown content styling */
+.markdown strong {
+  font-weight: bold;
+  color: #1e40af;
+}
+
+.markdown p {
+  margin-bottom: 0.5rem;
+}

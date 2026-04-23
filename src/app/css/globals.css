@@ -1,0 +1,289 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './layouts/sidebar.css';
+@import './layouts/header.css';
+@import './theme/default-colors.css';
+@import './override/reboot.css';
+@import './website-alt.css';
+
+
+@layer components {
+  .container {
+    @apply max-w-[1200px];
+  }
+
+  body {
+    @apply text-sm overflow-x-hidden;
+  }
+
+  .dropdown {
+    @apply shadow-md bg-white relative rounded-sm;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold text-dark
+  }
+
+  .card-subtitle {
+    @apply text-sm font-medium text-darklink
+  }
+
+  /*
+   * NOTE: Removed global `body { text-darklink }` — redundant with
+   * `@layer base { body { text-foreground } }` below, and caused conflicts.
+   *
+   * NOTE: Removed `text-dark` from headings. Headings now INHERIT color
+   * from their parent. This allows `text-white` on a parent div to
+   * propagate to child headings. Without this fix, Tailwind utility
+   * classes cannot override heading colors because the global `h1 { color }`
+   * rule always beats inherited values in CSS specificity.
+   *
+   * If a specific heading needs dark color, use `className="text-dark"` directly.
+   */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold;
+  }
+
+  .border-ld {
+    @apply border-border;
+  }
+
+  .form-control input {
+    @apply border border-border bg-transparent w-full text-sm;
+  }
+
+  .form-control-rounded input {
+    @apply rounded-full border border-border bg-transparent w-full text-sm;
+  }
+
+  .form-control-rounded input:focus {
+    @apply border-primary outline-none shadow-none ring-offset-0 ring-transparent;
+  }
+
+
+  .form-control input:focus {
+    @apply border-primary outline-none shadow-none ring-offset-0 ring-transparent;
+  }
+
+  .form-control-input {
+    @apply rounded-md border border-border bg-transparent w-full text-sm;
+  }
+
+  .form-control-input:focus {
+    @apply border-primary outline-none shadow-none ring-offset-0 ring-transparent;
+  }
+
+  .form-rounded-md input {
+    @apply rounded-md border border-border bg-transparent w-full text-sm;
+  }
+
+  .form-rounded-md input:focus {
+    @apply border-primary outline-none shadow-none ring-offset-0 ring-transparent;
+  }
+
+  .form-rounded input {
+    @apply rounded-full
+  }
+
+  .elipse {
+    @apply w-[18px] h-[10px]
+  }
+
+  input::placeholder {
+    @apply text-darklink
+  }
+
+  .select-option select {
+    @apply bg-muted border-0 text-darklink d py-2 ps-4 pe-9 w-auto focus:border-0 focus:ring-0 font-medium;
+  }
+
+  .select-md select {
+    @apply border-ld bg-transparent w-full text-sm rounded-md focus:border-primary focus:ring-0;
+  }
+
+  .select-rounded select {
+    @apply border-ld bg-transparent w-full text-sm rounded-full focus:border-primary focus:ring-0;
+  }
+
+  .checkbox {
+    @apply h-[18px] w-[18px] border border-border bg-transparent focus:ring-0 focus:ring-offset-0
+  }
+}
+
+
+/*---break---*/
+
+
+@layer base {
+  :root {
+
+
+    --background: 0 0% 100%;
+
+
+    --foreground: 222.2 84% 4.9%;
+
+
+    --card: 0 0% 100%;
+
+
+    --card-foreground: 222.2 84% 4.9%;
+
+
+    --popover: 0 0% 100%;
+
+
+    --popover-foreground: 222.2 84% 4.9%;
+
+
+    --primary: 222.2 47.4% 11.2%;
+
+
+    --primary-foreground: 210 40% 98%;
+
+
+    --secondary: 210 40% 96.1%;
+
+
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+
+    --muted: 210 40% 96.1%;
+
+
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+
+    --accent: 210 40% 96.1%;
+
+
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+
+    --destructive: 0 84.2% 60.2%;
+
+
+    --destructive-foreground: 210 40% 98%;
+
+
+    --border: 214.3 31.8% 91.4%;
+
+
+    --input: 214.3 31.8% 91.4%;
+
+
+    --ring: 222.2 84% 4.9%;
+
+
+    --chart-1: 12 76% 61%;
+
+
+    --chart-2: 173 58% 39%;
+
+
+    --chart-3: 197 37% 24%;
+
+
+    --chart-4: 43 74% 66%;
+
+
+    --chart-5: 27 87% 67%;
+
+
+    --radius: 0.5rem
+  }
+  .dark {
+
+
+    --background: 222.2 84% 4.9%;
+
+
+    --foreground: 210 40% 98%;
+
+
+    --card: 222.2 84% 4.9%;
+
+
+    --card-foreground: 210 40% 98%;
+
+
+    --popover: 222.2 84% 4.9%;
+
+
+    --popover-foreground: 210 40% 98%;
+
+
+    --primary: 210 40% 98%;
+
+
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+
+    --secondary: 217.2 32.6% 17.5%;
+
+
+    --secondary-foreground: 210 40% 98%;
+
+
+    --muted: 217.2 32.6% 17.5%;
+
+
+    --muted-foreground: 215 20.2% 65.1%;
+
+
+    --accent: 217.2 32.6% 17.5%;
+
+
+    --accent-foreground: 210 40% 98%;
+
+
+    --destructive: 0 62.8% 30.6%;
+
+
+    --destructive-foreground: 210 40% 98%;
+
+
+    --border: 217.2 32.6% 17.5%;
+
+
+    --input: 217.2 32.6% 17.5%;
+
+
+    --ring: 212.7 26.8% 83.9%;
+
+
+    --chart-1: 220 70% 50%;
+
+
+    --chart-2: 160 60% 45%;
+
+
+    --chart-3: 30 80% 55%;
+
+
+    --chart-4: 280 65% 60%;
+
+
+    --chart-5: 340 75% 55%
+  }
+}
+
+
+/*---break---*/
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

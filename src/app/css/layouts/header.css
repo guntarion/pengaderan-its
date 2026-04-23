@@ -1,0 +1,20 @@
+.mobile-header-menu {
+  height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+.mobile-header-menu.active {
+  min-height: 70px;
+  overflow: visible;
+}
+
+.page-wrapper {
+  margin-left: 224px; /* Reduced from 260px to match new sidebar width */
+  transition: 0.2s ease-in;
+}
+
+@media screen and (max-width: 1280px) {
+  .page-wrapper {
+    margin-left: 0;
+  }
+}
