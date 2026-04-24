@@ -35,6 +35,9 @@ model Organization {
   updatedAt    DateTime           @updatedAt
   archivedAt   DateTime?
 
+  // M02: Public catalog flag
+  publicCatalogEnabled Boolean @default(false)
+
   // Relations
   users           User[]
   cohorts         Cohort[]
@@ -43,6 +46,7 @@ model Organization {
   paktaRejections PaktaRejection[]
   auditLogs       NawasenaAuditLog[]
   whitelistEmails WhitelistEmail[]
+  kegiatan        Kegiatan[]
 
   @@index([status])
   @@map("organizations")

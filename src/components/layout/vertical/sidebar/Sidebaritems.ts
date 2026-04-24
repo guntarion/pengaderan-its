@@ -110,6 +110,68 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
+  /* REFERENSI — Panduan & Dokumen Master                               */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Referensi',
+    roles: ALL_NAWASENA,
+    children: [
+      {
+        name: 'Referensi',
+        icon: 'solar:book-bookmark-minimalistic-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ALL_NAWASENA,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Katalog Kegiatan',
+            url: '/kegiatan',
+            isPro: false,
+            roles: ALL_NAWASENA,
+          },
+          {
+            id: uniqueId(),
+            name: 'Forbidden Acts',
+            url: '/referensi/forbidden-acts',
+            isPro: false,
+            roles: ALL_NAWASENA,
+          },
+          {
+            id: uniqueId(),
+            name: 'Safeguard Protocol',
+            url: '/referensi/safeguard',
+            isPro: false,
+            roles: ALL_NAWASENA,
+          },
+          {
+            id: uniqueId(),
+            name: 'Rubrik AAC&U',
+            url: '/referensi/rubrik',
+            isPro: false,
+            roles: ALL_NAWASENA,
+          },
+          {
+            id: uniqueId(),
+            name: 'Taksonomi',
+            url: '/referensi/taksonomi',
+            isPro: false,
+            roles: ALL_NAWASENA,
+          },
+          {
+            id: uniqueId(),
+            name: 'Inventori Form',
+            url: '/referensi/form-inventory',
+            isPro: false,
+            roles: COMMITTEE,
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
   /* ADMIN — Manajemen organisasi (SC, PEMBINA, BLM, SATGAS, SUPERADMIN) */
   /* ----------------------------------------------------------------- */
   {
@@ -200,6 +262,43 @@ const SidebarContent: MenuItem[] = [
         url: '/admin/audit-log',
         isPro: false,
         roles: SENIOR_STAFF,
+      },
+      {
+        name: 'Master Data',
+        icon: 'solar:database-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ADMIN_ROLES,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Hub Master Data',
+            url: '/admin/master',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+          {
+            id: uniqueId(),
+            name: 'Kegiatan',
+            url: '/admin/master/kegiatan',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+          {
+            id: uniqueId(),
+            name: 'Taksonomi',
+            url: '/admin/master/taksonomi',
+            isPro: false,
+            roles: SUPERADMIN_ONLY,
+          },
+          {
+            id: uniqueId(),
+            name: 'Seed Data',
+            url: '/admin/master/seed',
+            isPro: false,
+            roles: SUPERADMIN_ONLY,
+          },
+        ],
       },
     ],
   },

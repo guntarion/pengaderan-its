@@ -54,6 +54,16 @@ export const ROUTE_RBAC_MAP: Record<string, UserRole[]> = {
   // ---- Pakta signing (all authenticated except system roles) ----
   '/pakta/sign': ALL_ROLES.filter((r) => r !== UserRole.DOSEN_WALI),
 
+  // ---- Reference pages (all authenticated) ----
+  '/referensi': ALL_ROLES,
+
+  // ---- Master data admin — SUPERADMIN only routes ----
+  '/admin/master/seed': [UserRole.SUPERADMIN],
+  '/admin/master/taksonomi': [UserRole.SUPERADMIN],
+
+  // ---- Master data admin — SC + SUPERADMIN ----
+  '/admin/master': [UserRole.SC, UserRole.SUPERADMIN],
+
   // ---- Dashboard (all authenticated) ----
   '/dashboard': ALL_ROLES,
 

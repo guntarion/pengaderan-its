@@ -1,0 +1,365 @@
+// prisma/schema/nawasena_master.prisma
+// Domain: Master Data & Taksonomi (NAWASENA M02)
+// 11 tabel: Kegiatan, Tujuan, KPIDef, AnchorRef, PassportItem, Rubrik,
+//            ForbiddenAct, SafeguardProtocol, TaxonomyMeta, FormInventory, RolePermission
+// 12 enum: NilaiKey, DimensiKey, FaseKey, KategoriKey, KegiatanIntensity, KegiatanScale,
+//           KPIType, EvidenceType, ForbiddenActSeverity, TaxonomyGroup, FormPriority, FormFrequency
+
+// ============================================
+// ENUMS — Taksonomi Primer (hardcoded, type-safe)
+// ============================================
+
+enum NilaiKey {
+  N1_BUDAYA
+  N2_LINGKUNGAN
+  N3_EMPAT_BIDANG
+  N4_KEPROFESIAN
+  N5_HMTC_ITS
+  N6_REGENERASI
+  N7_KESEJAHTERAAN
+  N8_PENGABDIAN
+}
+
+enum DimensiKey {
+  D1_ORANG
+  D2_FASILITAS
+  D3_BIDANG_PEMBELAJARAN
+  D4_KARIR
+  D5_KEMAHASISWAAN
+  D6_AKADEMIK
+  D7_KEKOMPAKAN
+  D8_LOYALITAS
+  D9_MENTAL_POSITIF
+  D10_KEPEDULIAN_SOSIAL
+  D11_KEINSINYURAN
+}
+
+enum FaseKey {
+  F0_PRA
+  F1_FOUNDATION
+  F2_CHALLENGE
+  F3_PEAK
+  F4_INTEGRATION
+}
+
+enum KategoriKey {
+  K1_KONTRAK_SAFEGUARD
+  K2_PENGENALAN_RELASIONAL
+  K3_FASILITAS
+  K4_AKADEMIK_KEPROFESIAN
+  K5_SOLIDARITAS_ANGKATAN
+  K6_KESEJAHTERAAN
+  K7_PENGABDIAN
+}
+
+// ============================================
+// ENUMS — Kegiatan Properties
+// ============================================
+
+enum KegiatanIntensity {
+  RINGAN
+  SEDANG
+  BERAT
+}
+
+enum KegiatanScale {
+  INDIVIDUAL
+  KP
+  CROSS_KP
+  ANGKATAN
+  MULTI_ANGKATAN
+}
+
+// ============================================
+// ENUMS — KPI & Evidence
+// ============================================
+
+enum KPIType {
+  HIGHER_BETTER
+  LOWER_BETTER
+  ZERO_ONE
+  RANGE
+}
+
+enum EvidenceType {
+  TANDA_TANGAN
+  FOTO
+  QR_STAMP
+  FILE
+  LOGBOOK
+  ATTENDANCE
+}
+
+// ============================================
+// ENUMS — Compliance
+// ============================================
+
+enum ForbiddenActSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+// ============================================
+// ENUMS — Taxonomy & Forms
+// ============================================
+
+enum TaxonomyGroup {
+  NILAI
+  DIMENSI
+  FASE
+  KATEGORI
+}
+
+enum FormPriority {
+  WAJIB
+  WAJIB_OPT_OUT
+  ENCOURAGED
+  OPTIONAL
+  ON_DEMAND
+}
+
+enum FormFrequency {
+  DAILY
+  WEEKLY
+  BI_WEEKLY
+  PER_EVENT
+  PER_MILESTONE
+  ON_DEMAND
+  ONE_TIME
+  CUSTOM
+}
+
+// ============================================
+// MODEL: Kegiatan (hybrid multi-tenant master activity)
+// ============================================
+
+model Kegiatan {
+  id              String             @id // natural ID e.g. "K4.05"
+  nama            String
+  deskripsiSingkat String            @db.VarChar(500)
+  deskripsiFull   String?            @db.Text // markdown
+  rasional        String             @db.Text // markdown
+  safeguardNotes  String?            @db.Text
+  nilai           NilaiKey
+  dimensi         DimensiKey
+  fase            FaseKey
+  kategori        KategoriKey
+  intensity       KegiatanIntensity
+  scale           KegiatanScale
+  durasiMenit     Int
+  frekuensi       String
+  picRoleHint     String?
+  prasyaratIds    String[]           // array of Kegiatan IDs
+  isActive        Boolean            @default(true)
+  isGlobal        Boolean            @default(false)
+  organizationId  String?            // FK → Organization (null when isGlobal=true)
+  displayOrder    Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relations
+  organization    Organization?      @relation(fields: [organizationId], references: [id])
+  tujuan          Tujuan[]
+  kpiDefs         KPIDef[]
+  anchors         AnchorRef[]
+  passportItems   PassportItem[]
+
+  @@index([fase])
+  @@index([kategori])
+  @@index([nilai])
+  @@index([organizationId, isActive])
+  @@index([isGlobal, isActive])
+  @@index([displayOrder])
+  @@map("kegiatan")
+}
+
+// ============================================
+// MODEL: Tujuan (learning objectives per Kegiatan)
+// ============================================
+
+model Tujuan {
+  id          String   @id // natural ID e.g. "T-K4.05-1"
+  kegiatanId  String
+  ordinal     Int
+  text        String   @db.Text
+
+  // Relations
+  kegiatan    Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+
+  @@index([kegiatanId, ordinal])
+  @@map("tujuan")
+}
+
+// ============================================
+// MODEL: KPIDef (KPI definitions per Kegiatan)
+// ============================================
+
+model KPIDef {
+  id             String   @id // natural ID e.g. "KPI-K4.05-1"
+  kegiatanId     String
+  text           String
+  type           KPIType
+  targetNumeric  Float?
+  unit           String?
+  isLeading      Boolean  @default(true)
+  measureMethod  String?
+  outputField    String?
+  outcomeField   String?
+
+  // Relations
+  kegiatan       Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+
+  @@index([kegiatanId])
+  @@map("kpi_defs")
+}
+
+// ============================================
+// MODEL: AnchorRef (concept anchors / references per Kegiatan)
+// ============================================
+
+model AnchorRef {
+  id          String   @id // natural ID e.g. "AR-K4.05-1"
+  kegiatanId  String
+  source      String
+  link        String?
+  excerpt     String?  @db.Text
+
+  // Relations
+  kegiatan    Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+
+  @@index([kegiatanId])
+  @@map("anchor_refs")
+}
+
+// ============================================
+// MODEL: PassportItem (dimension achievement passport)
+// ============================================
+
+model PassportItem {
+  id                String       @id // natural ID e.g. "PI-D1-01"
+  dimensi           DimensiKey
+  kegiatanId        String?      // optional FK to Kegiatan
+  description       String
+  targetWaktu       String
+  evidenceType      EvidenceType
+  verifierRoleHint  String
+  ordinal           Int
+
+  // Relations
+  kegiatan          Kegiatan?    @relation(fields: [kegiatanId], references: [id], onDelete: SetNull)
+
+  @@index([dimensi, ordinal])
+  @@index([kegiatanId])
+  @@map("passport_items")
+}
+
+// ============================================
+// MODEL: Rubrik (AAC&U rubric levels)
+// ============================================
+
+model Rubrik {
+  id                     String   @id // e.g. "AACU_ETHICAL_REASONING_L3"
+  rubrikKey              String
+  rubrikLabel            String
+  level                  Int      // 1, 2, 3, 4
+  levelLabel             String
+  levelDescriptor        String   @db.Text
+  applicableKegiatanIds  String[] // array of Kegiatan IDs
+
+  @@unique([rubrikKey, level])
+  @@index([rubrikKey])
+  @@map("rubrik")
+}
+
+// ============================================
+// MODEL: ForbiddenAct (prohibited actions catalog)
+// ============================================
+
+model ForbiddenAct {
+  id                String               @id // natural "FA-01"
+  category          String
+  description       String               @db.Text
+  regulationSource  String
+  severity          ForbiddenActSeverity
+  consequence       String               @db.Text
+  detectionSignal   String               @db.Text
+  ordinal           Int
+
+  @@index([severity])
+  @@index([ordinal])
+  @@map("forbidden_acts")
+}
+
+// ============================================
+// MODEL: SafeguardProtocol (safety protocols)
+// ============================================
+
+model SafeguardProtocol {
+  id               String  @id // natural "SG-01"
+  mechanism        String
+  description      String  @db.Text
+  whenActivated    String
+  responsibleRole  String
+  protocolSteps    String  @db.Text
+  dataTable        String?
+  ordinal          Int
+
+  @@index([ordinal])
+  @@map("safeguard_protocols")
+}
+
+// ============================================
+// MODEL: TaxonomyMeta (bilingual labels for taxonomy enums)
+// ============================================
+
+model TaxonomyMeta {
+  id           String        @id // key from enum e.g. "N5_HMTC_ITS"
+  group        TaxonomyGroup
+  labelId      String        // label Bahasa Indonesia
+  labelEn      String
+  deskripsi    String?       @db.Text
+  displayOrder Int
+  updatedAt    DateTime      @updatedAt
+
+  @@index([group, displayOrder])
+  @@map("taxonomy_meta")
+}
+
+// ============================================
+// MODEL: FormInventory (form catalog reference)
+// ============================================
+
+model FormInventory {
+  id              String        @id // natural "F-MABA-01"
+  namaForm        String
+  pengisiRole     String
+  frekuensi       FormFrequency
+  estimasiMenit   Int
+  prioritas       FormPriority
+  devicePrimary   String
+  dataTable       String
+  visibility      String
+
+  @@index([pengisiRole])
+  @@index([prioritas])
+  @@map("form_inventory")
+}
+
+// ============================================
+// MODEL: RolePermission (role-permission matrix reference)
+// ============================================
+
+model RolePermission {
+  id       String   @id @default(cuid())
+  role     String
+  resource String
+  action   String
+  scope    String?
+  note     String?  @db.Text
+
+  @@unique([role, resource, action, scope])
+  @@index([role])
+  @@map("role_permissions")
+}

@@ -34,6 +34,8 @@ const PUBLIC_PATHS = [
   '/',
   '/about',
   '/contact',
+  // Public kegiatan catalog
+  '/kegiatan',
 ];
 
 // Routes that are accessible even when pakta is pending
