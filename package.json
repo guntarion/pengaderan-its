@@ -63,6 +63,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.7",
+    "@react-pdf/renderer": "^4.5.1",
     "@tabler/icons-react": "3.5.0",
     "@tanstack/react-table": "^8.21.3",
     "@types/papaparse": "^5.5.2",

@@ -101,6 +101,16 @@ model Organization {
   kpLogWeeklies   KPLogWeekly[] @relation("KPLogWeeklyOrg")
   kasuhLogs       KasuhLog[]    @relation("KasuhLogOrg")
 
+  // M10 Safeguard & Insiden back-relations
+  safeguardIncidents       SafeguardIncident[]            @relation("OrgSafeguardIncidents")
+  consequenceLogs          ConsequenceLog[]               @relation("OrgConsequenceLogs")
+  incidentTimelineEntries  IncidentTimelineEntry[]        @relation("OrgTimelineEntries")
+  escalationFallbacks      SafeguardEscalationFallback[]  @relation("OrgEscalationFallbacks")
+
+  // M11 Mental Health back-relations
+  mhScreenings             MHScreening[]
+  mhReferralLogs           MHReferralLog[]
+
   @@index([status])
   @@map("organizations")
 }
@@ -169,6 +179,15 @@ model Cohort {
   kpLogDailies    KPLogDaily[]  @relation("KPLogDailyCohort")
   kpLogWeeklies   KPLogWeekly[] @relation("KPLogWeeklyCohort")
   kasuhLogs       KasuhLog[]    @relation("KasuhLogCohort")
+
+  // M10 Safeguard & Insiden back-relations
+  safeguardIncidents  SafeguardIncident[]  @relation("CohortSafeguardIncidents")
+  consequenceLogs     ConsequenceLog[]     @relation("CohortConsequenceLogs")
+
+  // M11 Mental Health back-relations
+  mhScreenings        MHScreening[]
+  mhConsentRecords    MHConsentRecord[]
+  mhResearchConsents  MHResearchConsent[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])

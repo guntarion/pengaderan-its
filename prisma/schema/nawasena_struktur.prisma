@@ -67,6 +67,9 @@ model KPGroup {
   kpLogDailies  KPLogDaily[]  @relation("KPLogDailyKPGroup")
   kpLogWeeklies KPLogWeekly[] @relation("KPLogWeeklyKPGroup")
 
+  // M10 Safeguard back-relations
+  safeguardIncidents SafeguardIncident[] @relation("KPGroupSafeguardIncidents")
+
   @@unique([cohortId, code])
   @@unique([cohortId, kpCoordinatorUserId])
   @@index([organizationId, cohortId, status])

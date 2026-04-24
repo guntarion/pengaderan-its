@@ -181,6 +181,33 @@ model User {
   kasuhLogsAsKasuh    KasuhLog[]    @relation("KasuhLogKasuh")
   kasuhLogsAsMaba     KasuhLog[]    @relation("KasuhLogMaba")
 
+  // M11 Mental Health Screening flags
+  isSACCounselor              Boolean                       @default(false)
+  isPoliPsikologiCoord        Boolean                       @default(false)
+  mhScreenings                MHScreening[]
+  mhReferralsAsMaba           MHReferralLog[]               @relation("MHReferralsMaba")
+  mhReferralsAsSAC            MHReferralLog[]               @relation("MHReferralsSAC")
+  mhReferralsTakenOver        MHReferralLog[]               @relation("MHReferralsTakenOver")
+  mhConsentRecords            MHConsentRecord[]
+  mhResearchConsents          MHResearchConsent[]
+  mhDeletionRequests          MHDeletionRequest[]
+  mhAccessLogs                MHAccessLog[]                 @relation("MHAccessActor")
+
+  // M10 Safeguard & Insiden
+  isSafeguardOfficer          Boolean                       @default(false)
+  incidentsReported           SafeguardIncident[]            @relation("IncidentReporter")
+  incidentsAffected           SafeguardIncident[]            @relation("IncidentAffected")
+  incidentsClaimed            SafeguardIncident[]            @relation("IncidentClaimer")
+  incidentsResolved           SafeguardIncident[]            @relation("IncidentResolver")
+  incidentsEscalated          SafeguardIncident[]            @relation("IncidentEscalator")
+  incidentsRetracted          SafeguardIncident[]            @relation("IncidentRetractor")
+  consequencesAsTarget        ConsequenceLog[]               @relation("ConsequenceTarget")
+  consequencesAssigned        ConsequenceLog[]               @relation("ConsequenceAssigner")
+  consequencesReviewed        ConsequenceLog[]               @relation("ConsequenceReviewer")
+  consequencesCancelled       ConsequenceLog[]               @relation("ConsequenceCanceller")
+  incidentTimelineEntries     IncidentTimelineEntry[]        @relation("TimelineActor")
+  escalationFallbacksReceived SafeguardEscalationFallback[]  @relation("EscalationFallbackReceiver")
+
   // M04 Pulse & Journal relations
   pulseChecks             PulseCheck[]    @relation("UserPulseChecks")
   journalDrafts           JournalDraft[]  @relation("UserJournalDrafts")
@@ -196,6 +223,8 @@ model User {
   @@index([organizationId, role])
   @@index([organizationId, currentCohortId])
   @@index([organizationId, status])
+  @@index([organizationId, isSafeguardOfficer])
+  @@index([organizationId, isSACCounselor])
   @@map("users")
 }
 

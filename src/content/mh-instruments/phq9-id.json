@@ -1,0 +1,93 @@
+[
+  {
+    "index": 0,
+    "textId": "Merasa tidak tertarik atau tidak menikmati melakukan apapun",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 1,
+    "textId": "Merasa sedih, tertekan, atau putus asa",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 2,
+    "textId": "Kesulitan untuk tertidur atau tetap tidur, atau tidur terlalu banyak",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 3,
+    "textId": "Merasa lelah atau tidak memiliki tenaga",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 4,
+    "textId": "Tidak nafsu makan atau makan terlalu banyak",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 5,
+    "textId": "Merasa buruk tentang diri sendiri — atau merasa sebagai orang yang gagal atau telah mengecewakan diri sendiri atau keluarga",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 6,
+    "textId": "Kesulitan berkonsentrasi pada suatu hal, seperti membaca koran atau menonton televisi",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 7,
+    "textId": "Bergerak atau berbicara sangat lambat sehingga orang lain memperhatikan, atau sebaliknya — merasa sangat gelisah atau tidak bisa diam sehingga bergerak lebih banyak dari biasanya",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  },
+  {
+    "index": 8,
+    "textId": "Pikiran bahwa lebih baik mati atau ingin menyakiti diri sendiri dengan cara tertentu",
+    "guidanceId": "Jika kamu memiliki pikiran seperti ini, kamu tidak sendirian. Hubungi SAC ITS atau 119 ext 8 untuk berbicara dengan seseorang yang siap mendengarkan.",
+    "options": [
+      { "value": 0, "labelId": "Tidak pernah" },
+      { "value": 1, "labelId": "Beberapa hari" },
+      { "value": 2, "labelId": "Lebih dari setengah hari" },
+      { "value": 3, "labelId": "Hampir setiap hari" }
+    ]
+  }
+]

@@ -302,6 +302,29 @@ const SidebarContent: MenuItem[] = [
         roles: SENIOR_STAFF,
       },
       {
+        name: 'MH Agregat',
+        icon: 'solar:chart-2-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: SENIOR_STAFF,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Distribusi Severity',
+            url: '/dashboard/admin/mental-health/aggregate',
+            isPro: false,
+            roles: SENIOR_STAFF,
+          },
+          {
+            id: uniqueId(),
+            name: 'Transisi F1→F4',
+            url: '/dashboard/admin/mental-health/aggregate/transition',
+            isPro: false,
+            roles: SENIOR_STAFF,
+          },
+        ],
+      },
+      {
         name: 'Master Data',
         icon: 'solar:database-linear',
         id: uniqueId(),
@@ -388,6 +411,75 @@ const SidebarContent: MenuItem[] = [
         url: '/dashboard/kasuh',
         isPro: false,
         roles: ['KASUH'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* KESEHATAN MENTAL — M11 MH Screening (MABA) + SAC Queue            */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Kesehatan Mental',
+    roles: ['MABA'],
+    children: [
+      {
+        name: 'Skrining Kesehatan',
+        icon: 'solar:heart-shine-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ['MABA'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Persetujuan',
+            url: '/dashboard/mental-health/consent',
+            isPro: false,
+            roles: ['MABA'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Mulai Skrining',
+            url: '/dashboard/mental-health/form',
+            isPro: false,
+            roles: ['MABA'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Riwayat',
+            url: '/dashboard/mental-health/results',
+            isPro: false,
+            roles: ['MABA'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Privasi & Data Saya',
+            url: '/dashboard/mental-health/privacy',
+            isPro: false,
+            roles: ['MABA'],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* SAC TOOLS — M11 Antrian Referral                                    */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'SAC Tools',
+    // This heading shows for SUPERADMIN for dev access;
+    // isSACCounselor flag is checked in the page layout (not here).
+    roles: ['SUPERADMIN'],
+    children: [
+      {
+        name: 'Antrian Referral',
+        icon: 'solar:inbox-in-linear',
+        id: uniqueId(),
+        url: '/dashboard/sac/screening-queue',
+        isPro: false,
+        roles: ['SUPERADMIN'],
       },
     ],
   },
@@ -747,6 +839,75 @@ const SidebarContent: MenuItem[] = [
             roles: ADMIN_ROLES,
           },
         ],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* SAFEGUARD — M10 Insiden (SC, SG-Officer, PEMBINA, OC, KP, BLM)    */
+  /* Inaccessible via role alone for SG-Officer (flag-based);           */
+  /* the layout.tsx guards access for isSafeguardOfficer.               */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Safeguard',
+    roles: ['SC', 'PEMBINA', 'OC', 'KP', 'BLM', 'SATGAS', 'SUPERADMIN'],
+    children: [
+      {
+        name: 'Safeguard',
+        icon: 'solar:shield-warning-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ['SC', 'PEMBINA', 'OC', 'KP', 'BLM', 'SATGAS', 'SUPERADMIN'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Daftar Insiden',
+            url: '/dashboard/safeguard/incidents',
+            isPro: false,
+            roles: ['SC', 'PEMBINA', 'OC', 'KP', 'BLM', 'SATGAS', 'SUPERADMIN'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Laporkan Insiden',
+            url: '/dashboard/safeguard/incidents/new',
+            isPro: false,
+            roles: ['SC', 'OC', 'KP', 'SUPERADMIN'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Konsekuensi (SC)',
+            url: '/dashboard/safeguard/consequences',
+            isPro: false,
+            roles: ['SC', 'SUPERADMIN'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Berikan Konsekuensi',
+            url: '/dashboard/safeguard/consequences/new',
+            isPro: false,
+            roles: ['SC', 'SUPERADMIN'],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* KONSEKUENSI SAYA — M10 Maba self-view (all roles, shows own data) */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Konsekuensi',
+    roles: ALL_NAWASENA,
+    children: [
+      {
+        name: 'Konsekuensi Saya',
+        icon: 'solar:clipboard-list-linear',
+        id: uniqueId(),
+        url: '/dashboard/konsekuensi',
+        isPro: false,
+        roles: ALL_NAWASENA,
       },
     ],
   },

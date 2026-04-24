@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { DynamicBreadcrumb } from '@/components/shared/DynamicBreadcrumb';
 import { SkeletonCard } from '@/components/shared/skeletons';
+import { SafeWordQuickWidget } from '@/app/(DashboardLayout)/dashboard/kp/components/SafeWordQuickWidget';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';
 import { Users2, MapPin, ChevronRight } from 'lucide-react';
@@ -76,6 +77,9 @@ export default function KPGroupPage() {
   return (
     <div className="p-6 space-y-6">
       <DynamicBreadcrumb />
+
+      {/* Safe Word quick widget — always shown at top for KP role */}
+      <SafeWordQuickWidget cohortId={group?.cohort.id ?? ''} />
 
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white">

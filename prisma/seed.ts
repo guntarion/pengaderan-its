@@ -29,6 +29,8 @@ import { seedM07SampleData } from './seed/m07-sample-data';
 import { seedM09LogbookData } from './seed/m09-logbook';
 import { seedM09NotificationRules } from './seed/m09-notification-rules';
 import { seedEventExecutionSampleData } from './seed/event-execution-sample';
+import { seedM10SafeguardData, seedM10SampleData } from './seed/m10-safeguard';
+import { seedMHNotificationTemplates } from './seed/mh-notification-templates';
 
 const log = createLogger('seed');
 const prisma = new PrismaClient();
@@ -386,6 +388,26 @@ async function main() {
     log.info('Starting M08 event execution sample data seed');
     await seedEventExecutionSampleData(prisma);
   }
+
+  // ========================================
+  // 13. M10: Safeguard notification templates + rules (always)
+  // ========================================
+  log.info('Starting M10 safeguard notification templates seed');
+  await seedM10SafeguardData(prisma, superAdmin.id);
+
+  // ========================================
+  // 13b. M10: Safeguard sample incidents (dev only)
+  // ========================================
+  if (process.env.NODE_ENV !== 'production') {
+    log.info('Starting M10 safeguard sample data seed');
+    await seedM10SampleData(prisma);
+  }
+
+  // ========================================
+  // 14. M11: Mental Health Screening notification templates
+  // ========================================
+  log.info('Starting M11 mental health notification templates seed');
+  await seedMHNotificationTemplates(prisma, superAdmin.id);
 
   // ========================================
   // Summary
