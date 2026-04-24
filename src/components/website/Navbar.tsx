@@ -33,6 +33,7 @@ export function Navbar() {
     { name: 'Features', href: '/landingpage#features' },
     { name: 'About', href: '/landingpage#about' },
     { name: 'Contact', href: '/landingpage#contact' },
+    { name: 'Lapor Anonim', href: '/anon-report' },
   ];
 
   return (

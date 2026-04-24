@@ -1,0 +1,154 @@
+// prisma/schema/nawasena_anon_report.prisma
+// Domain: Anonymous Channel (NAWASENA M12)
+// Privacy+Anonymity CRITICAL module — Zero userId linkage on AnonReport.
+//
+// HARD INVARIANT: AnonReport MUST NOT have userId, email, phone, reporterName,
+// ip, userAgent, fingerprint columns. CI test enforces this.
+//
+// 3 models: AnonReport, AnonReportAccessLog, AnonReportConfig
+// 4 enums: AnonCategory, AnonSeverity, AnonStatus, AnonAccessAction
+//
+// RLS policies added manually to migration SQL — see migration.
+
+// ============================================
+// ENUMS — Anonymous Channel
+// ============================================
+
+enum AnonCategory {
+  BULLYING
+  HARASSMENT
+  UNFAIR
+  SUGGESTION
+  OTHER
+}
+
+enum AnonSeverity {
+  GREEN
+  YELLOW
+  RED
+}
+
+enum AnonStatus {
+  NEW
+  IN_REVIEW
+  RESOLVED
+  ESCALATED_TO_SATGAS
+}
+
+enum AnonAccessAction {
+  READ
+  UPDATE
+  DOWNLOAD_ATTACHMENT
+  ESCALATE
+  STATUS_CHANGE
+  SEVERITY_OVERRIDE
+  CATEGORY_OVERRIDE
+  PUBLIC_NOTE_ADDED
+  INTERNAL_NOTE_ADDED
+  TAKEOVER_FROM_DEACTIVATED
+  BULK_DELETE
+  BYPASS_RLS
+}
+
+// ============================================
+// MODEL: AnonReport — core report (NO userId, NO email, NO IP)
+// ============================================
+//
+// CRITICAL: This model MUST NOT contain userId, email, phone,
+// reporterName, ip, userAgent, or fingerprint fields.
+// Any PR adding these fields = anonymity breach.
+//
+model AnonReport {
+  id           String @id @default(uuid())
+  trackingCode String @unique @db.VarChar(12) // "NW-XXXXXXXX"
+
+  // Multi-tenant scoping — cohort selected by reporter
+  cohortId       String
+  organizationId String // derived from cohort at submit time
+
+  // Content
+  category      AnonCategory
+  bodyText      String       @db.Text
+  bodyRedacted  Boolean      @default(false) // true after 3-year retention soft-redact
+  attachmentKey String? // S3 key: "anon/reports/{id}/{uuid}.{ext}"
+
+  // Classification
+  reporterSeverity AnonSeverity? // optional indication by reporter
+  severity         AnonSeverity  @default(GREEN) // final, classifier-set
+  severityReason   String[]      @default([]) // keyword matches, category floor, manual override
+
+  // Status lifecycle
+  status            AnonStatus @default(NEW)
+  satgasEscalated   Boolean    @default(false) // true = CRITICAL notif sent to Satgas
+  satgasEscalatedAt DateTime?
+
+  // Handler tracking (BLM acknowledging — NOT reporter)
+  acknowledgedById String? // BLM/Satgas user id (handler, not reporter)
+  acknowledgedAt   DateTime?
+  closedAt         DateTime?
+
+  // Notes
+  resolutionNotes String?      @db.Text // internal, not visible to reporter
+  publicNote      String?      @db.VarChar(300) // visible in tracker
+  satgasNotes     String?      @db.Text // parallel Satgas notes, internal only
+
+  // Overrides audit trail (embedded summary; detail in AccessLog)
+  blmCategoryOverride AnonCategory?
+  blmSeverityOverride AnonSeverity?
+
+  // Lifecycle
+  recordedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  accessLogs AnonReportAccessLog[]
+
+  @@index([cohortId, status])
+  @@index([organizationId, status])
+  @@index([cohortId, severity])
+  @@index([satgasEscalated, status])
+  @@index([recordedAt])
+  @@index([acknowledgedById])
+  @@map("anon_reports")
+}
+
+// ============================================
+// MODEL: AnonReportAccessLog — immutable audit log
+// Actor = BLM / Satgas / SUPERADMIN (NOT reporter)
+// ============================================
+
+model AnonReportAccessLog {
+  id       String     @id @default(uuid())
+  reportId String
+  report   AnonReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  // Actor = BLM / Satgas / SUPERADMIN (NOT reporter)
+  actorId     String // User.id — legitimate handler
+  actorRole   String // snapshot at access time: 'BLM', 'SATGAS_PPKPT', 'SUPERADMIN'
+  actorIpHash String? @db.VarChar(64) // SHA-256 of IP, still hashed for privacy
+
+  action AnonAccessAction
+  meta   Json? // before/after values for UPDATE, download key for DOWNLOAD
+
+  createdAt DateTime @default(now())
+
+  @@index([reportId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@map("anon_report_access_logs")
+}
+
+// ============================================
+// MODEL: AnonReportConfig — keyword severity + admin config
+// ============================================
+
+model AnonReportConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique // 'severe_keywords', 'profanity_list', etc.
+  value       Json // array of strings
+  updatedById String // SUPERADMIN who last edited
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("anon_report_config")
+}

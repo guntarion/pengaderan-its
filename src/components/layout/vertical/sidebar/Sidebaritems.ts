@@ -913,6 +913,50 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
+  /* LAPORAN ANONIM — M12 Anonymous Channel                              */
+  /* Public submit link for all; triage for BLM; escalated for Satgas   */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Laporan Anonim',
+    roles: ALL_NAWASENA,
+    children: [
+      {
+        name: 'Kirim Laporan',
+        icon: 'solar:shield-user-linear',
+        id: uniqueId(),
+        url: '/anon-report',
+        isPro: false,
+        roles: ALL_NAWASENA,
+      },
+      {
+        name: 'Cek Status Laporan',
+        icon: 'solar:magnifer-linear',
+        id: uniqueId(),
+        url: '/anon-status',
+        isPro: false,
+        roles: ALL_NAWASENA,
+      },
+      {
+        name: 'Triase Laporan (BLM)',
+        icon: 'solar:inbox-linear',
+        id: uniqueId(),
+        url: '/dashboard/blm/anon-reports',
+        isPro: false,
+        roles: ['BLM', 'SUPERADMIN'],
+      },
+      {
+        name: 'Laporan Diteruskan (Satgas)',
+        icon: 'solar:shield-warning-linear',
+        id: uniqueId(),
+        url: '/dashboard/satgas/escalated-reports',
+        isPro: false,
+        roles: ['SATGAS', 'SUPERADMIN'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
   /* SUPERADMIN — Manajemen lintas-organisasi                            */
   /* ----------------------------------------------------------------- */
   {
@@ -938,6 +982,29 @@ const SidebarContent: MenuItem[] = [
             id: uniqueId(),
             name: 'Tambah Organisasi',
             url: '/admin/organizations/new',
+            isPro: false,
+            roles: SUPERADMIN_ONLY,
+          },
+        ],
+      },
+      {
+        name: 'Laporan Anonim (Admin)',
+        icon: 'solar:shield-check-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: SUPERADMIN_ONLY,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Audit Log Akses',
+            url: '/dashboard/superadmin/anon-audit',
+            isPro: false,
+            roles: SUPERADMIN_ONLY,
+          },
+          {
+            id: uniqueId(),
+            name: 'Konfigurasi Kata Kunci',
+            url: '/dashboard/superadmin/anon-keywords',
             isPro: false,
             roles: SUPERADMIN_ONLY,
           },
