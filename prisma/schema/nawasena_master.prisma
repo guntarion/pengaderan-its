@@ -247,8 +247,16 @@ model PassportItem {
   verifierRoleHint  String
   ordinal           Int
 
+  // M05 SKEM fields (added for SKEM export mapping)
+  skemPoints        Float?       // bila null = tidak qualify SKEM
+  skemCategory      String?      // mis. "Kepemimpinan", "Akademik", "Pengabdian"
+
   // Relations
   kegiatan          Kegiatan?    @relation(fields: [kegiatanId], references: [id], onDelete: SetNull)
+
+  // M05 back-relations
+  passportEntries   PassportEntry[]
+  qrSessions        PassportQrSession[]
 
   @@index([dimensi, ordinal])
   @@index([kegiatanId])

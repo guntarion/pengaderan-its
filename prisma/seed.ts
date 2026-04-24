@@ -21,6 +21,8 @@ import { createLogger } from '../src/lib/logger';
 import { seedNotificationTemplates } from './seed/notifications-templates';
 import { seedNotificationRules } from './seed/notifications-rules';
 import { seedNotificationPreferences } from './seed/notifications-preferences';
+import { seedJournalReflectionRubric } from './seed/m04-rubric-journal-reflection';
+import { seedM05SampleData } from './seed/m05-sample-data';
 
 const log = createLogger('seed');
 const prisma = new PrismaClient();
@@ -236,6 +238,12 @@ async function main() {
   await seedNotificationPreferences(prisma);
 
   // ========================================
+  // 5b. M04: JOURNAL_REFLECTION rubric seed
+  // ========================================
+  log.info('Starting M04 rubric seed');
+  await seedJournalReflectionRubric(prisma);
+
+  // ========================================
   // 6. M03: Dev fixture (gate: SEED_DEV_STRUKTUR=true)
   // ========================================
   if (process.env.NODE_ENV === 'development' && process.env.SEED_DEV_STRUKTUR === 'true') {
@@ -319,6 +327,14 @@ async function main() {
     }
 
     seedLog.info('M03 dev fixture seed completed');
+  }
+
+  // ========================================
+  // 7. M05: Passport Digital sample data (dev only)
+  // ========================================
+  if (process.env.NODE_ENV !== 'production') {
+    log.info('Starting M05 passport sample data seed');
+    await seedM05SampleData(prisma);
   }
 
   // ========================================

@@ -72,3 +72,40 @@ self.addEventListener('notificationclick', (event) => {
       }),
   );
 });
+
+// ============================================================
+// M04: Background Sync for offline pulse queue
+// ============================================================
+
+// Background Sync event: triggered when browser regains connectivity
+// and a sync tag was registered via ServiceWorkerRegistration.sync.register()
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'pulse-sync') {
+    // Signal to all clients to run the sync
+    // The actual sync logic lives in the client (offline-queue-client.ts)
+    // to keep the service worker minimal and avoid IDB complexity here.
+    event.waitUntil(notifyClientsToSync());
+  }
+});
+
+/**
+ * Notify all open clients to perform the offline pulse queue sync.
+ * The client-side offline-queue-client.ts listens for this message.
+ */
+async function notifyClientsToSync() {
+  const clientList = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+
+  for (const client of clientList) {
+    client.postMessage({ type: 'PULSE_SYNC_REQUESTED' });
+  }
+}
+
+// Message from client: manual sync trigger
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});

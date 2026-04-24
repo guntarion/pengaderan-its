@@ -142,6 +142,25 @@ model User {
   pairingRequestsResolved    PairingRequest[] @relation("PairingRequestResolver")
   bulkPairingBatchesCommitted BulkPairingBatch[] @relation("BulkPairingBatchCommitter")
 
+  // M05 Passport Digital back-relations
+  passportEntriesAsMaba       PassportEntry[]        @relation("PassportEntryMaba")
+  passportEntriesAsVerifier   PassportEntry[]        @relation("PassportEntryVerifier")
+  passportEntriesAsEscalated  PassportEntry[]        @relation("PassportEntryEscalatedTo")
+  passportEntriesAsOverridden PassportEntry[]        @relation("PassportEntryOverride")
+  passportQrSessionsCreated   PassportQrSession[]    @relation("PassportQrSessionCreator")
+  passportSkemExports         PassportSkemExportLog[]  @relation("PassportSkemExportGenerator")
+
+  // M04 Pulse & Journal relations
+  pulseChecks             PulseCheck[]    @relation("UserPulseChecks")
+  journalDrafts           JournalDraft[]  @relation("UserJournalDrafts")
+  journals                Journal[]       @relation("UserJournals")
+  rubricScoresReceived    RubrikScore[]   @relation("RubrikScoreSubject")
+  rubricScoresGiven       RubrikScore[]   @relation("RubrikScoreScoredBy")
+  redFlagSubjects         RedFlagEvent[]  @relation("RedFlagSubject")
+  redFlagNotified         RedFlagEvent[]  @relation("RedFlagNotified")
+  followUpsGiven          FollowUpRecord[] @relation("FollowUpActor")
+  followUpsReceived       FollowUpRecord[] @relation("FollowUpSubject")
+
   @@unique([organizationId, nrp])
   @@index([organizationId, role])
   @@index([organizationId, currentCohortId])

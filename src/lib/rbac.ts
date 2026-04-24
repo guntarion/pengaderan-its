@@ -71,6 +71,14 @@ export const ROUTE_RBAC_MAP: Record<string, UserRole[]> = {
   '/dashboard/relasi': [UserRole.MABA],
   '/dashboard/kakak-c': [UserRole.MABA],
 
+  // ---- M04 KP dashboard routes ----
+  '/dashboard/kp/journal-review': [UserRole.KP, UserRole.SC, UserRole.SUPERADMIN],
+  '/dashboard/kp/mood': [UserRole.KP, UserRole.SC, UserRole.SUPERADMIN],
+
+  // ---- M04 Maba pulse/journal routes ----
+  '/dashboard/journal': [UserRole.MABA, UserRole.KP, UserRole.SC, UserRole.SUPERADMIN],
+  '/dashboard/pulse': ALL_ROLES,
+
   // ---- Dashboard Struktur — KP ----
   '/dashboard/kp': [UserRole.KP],
 

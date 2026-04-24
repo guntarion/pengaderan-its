@@ -2,6 +2,7 @@
 import React from 'react';
 import Sidebar from '@/components/layout/vertical/sidebar/Sidebar';
 import Header from '@/components/layout/vertical/header/Header';
+import { InstallPWABanner } from '@/components/pulse/InstallPWABanner';
 
 export default function Layout({
   children,
@@ -10,6 +11,7 @@ export default function Layout({
 }>) {
   return (
     <div className='flex min-h-screen'>
+      <InstallPWABanner />
       <Sidebar />
       <div className='body-wrapper w-full bg-lightgray dark:bg-dark xl:ml-56'>
         <Header />

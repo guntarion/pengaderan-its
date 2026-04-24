@@ -1,0 +1,168 @@
+// prisma/schema/nawasena_passport.prisma
+// Domain: Passport Digital (NAWASENA M05)
+// 4 models: PassportEntry, PassportEvidenceUpload, PassportQrSession, PassportSkemExportLog
+// 3 enums: PassportEntryStatus, PassportQrSessionStatus, EvidenceScanStatus
+
+// ============================================
+// ENUMS — Passport Status
+// ============================================
+
+enum PassportEntryStatus {
+  PENDING   // sudah submit, menunggu verifikasi
+  VERIFIED  // verifier approve (atau auto-verified via QR)
+  REJECTED  // verifier reject dengan alasan
+  CANCELLED // Maba cancel sendiri sebelum verifier review
+}
+
+enum PassportQrSessionStatus {
+  ACTIVE  // sesi aktif, QR bisa di-scan
+  EXPIRED // lewat expiresAt
+  REVOKED // admin manual revoke
+}
+
+enum EvidenceScanStatus {
+  PENDING    // belum server-side scan
+  CLEAN      // scan passed (mime real match whitelist)
+  SUSPICIOUS // mime mismatch atau malware signature (hold for admin review)
+  FAILED     // scan error (retry later)
+}
+
+// ============================================
+// MODEL: PassportEntry (primary entity per submission)
+// ============================================
+
+model PassportEntry {
+  id                    String              @id @default(cuid())
+  organizationId        String
+  cohortId              String
+  userId                String
+  itemId                String              // FK → PassportItem natural ID
+  evidenceType          EvidenceType
+  evidenceUrl           String?             // untuk LOGBOOK atau external link
+  status                PassportEntryStatus @default(PENDING)
+  clientIdempotencyKey  String?             @unique
+  previousEntryId       String?             // resubmit chain
+  verifierId            String?             // pre-assigned verifier or null (QR auto)
+  verifiedAt            DateTime?
+  verifierNote          String?             @db.Text
+  submittedAt           DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  cancelledAt           DateTime?
+  cancelledReason       String?             @db.Text
+  escalatedAt           DateTime?
+  escalatedToUserId     String?
+  overriddenByUserId    String?             // SC who overrode
+  overriddenReason      String?             @db.Text
+  qrSessionId           String?
+  metadataJson          Json?
+
+  // Relations
+  organization    Organization      @relation(fields: [organizationId], references: [id])
+  cohort          Cohort            @relation(fields: [cohortId], references: [id])
+  user            User              @relation("PassportEntryMaba", fields: [userId], references: [id])
+  item            PassportItem      @relation(fields: [itemId], references: [id])
+  verifier        User?             @relation("PassportEntryVerifier", fields: [verifierId], references: [id])
+  previousEntry   PassportEntry?    @relation("PassportEntryResubmitChain", fields: [previousEntryId], references: [id])
+  nextEntries     PassportEntry[]   @relation("PassportEntryResubmitChain")
+  escalatedTo     User?             @relation("PassportEntryEscalatedTo", fields: [escalatedToUserId], references: [id])
+  overriddenBy    User?             @relation("PassportEntryOverride", fields: [overriddenByUserId], references: [id])
+  qrSession       PassportQrSession? @relation(fields: [qrSessionId], references: [id])
+  evidenceUploads PassportEvidenceUpload[]
+
+  @@index([userId, itemId, status])
+  @@index([verifierId, status])
+  @@index([organizationId, cohortId, status])
+  @@index([status, submittedAt(sort: Desc)], map: "passport_entries_status_submittedAt_desc_idx")
+  @@index([status, submittedAt], map: "passport_entries_status_submittedAt_asc_idx")
+  @@index([escalatedToUserId, status])
+  @@index([verifierId, status, submittedAt(sort: Desc)], map: "passport_entries_verifier_status_submittedAt_idx")
+  @@map("passport_entries")
+}
+
+// ============================================
+// MODEL: PassportEvidenceUpload (S3 metadata, not bytes)
+// ============================================
+
+model PassportEvidenceUpload {
+  id               String           @id @default(cuid())
+  organizationId   String
+  entryId          String
+  s3Key            String           @unique
+  s3Bucket         String
+  originalFilename String
+  mimeType         String
+  realMimeType     String?          // detected server-side by file-type lib
+  sizeBytes        Int
+  scanStatus       EvidenceScanStatus @default(PENDING)
+  scanNote         String?          @db.Text
+  uploadedAt       DateTime         @default(now())
+  checksumSha256   String?
+
+  // Relations
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  entry        PassportEntry  @relation(fields: [entryId], references: [id])
+
+  @@index([entryId])
+  @@index([organizationId])
+  @@index([scanStatus, uploadedAt])
+  @@index([checksumSha256])
+  @@map("passport_evidence_uploads")
+}
+
+// ============================================
+// MODEL: PassportQrSession (QR session state per event)
+// ============================================
+
+model PassportQrSession {
+  id               String                @id @default(cuid())
+  organizationId   String
+  cohortId         String
+  itemId           String                // FK → PassportItem
+  createdByUserId  String
+  eventName        String
+  eventLocation    String?
+  status           PassportQrSessionStatus @default(ACTIVE)
+  createdAt        DateTime              @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  revokedReason    String?               @db.Text
+  scanCount        Int                   @default(0)
+  maxScans         Int?
+
+  // Relations
+  organization  Organization      @relation(fields: [organizationId], references: [id])
+  cohort        Cohort            @relation(fields: [cohortId], references: [id])
+  item          PassportItem      @relation(fields: [itemId], references: [id])
+  creator       User              @relation("PassportQrSessionCreator", fields: [createdByUserId], references: [id])
+  entries       PassportEntry[]
+
+  @@index([organizationId, cohortId, status])
+  @@index([itemId, status])
+  @@index([expiresAt, status])
+  @@index([createdByUserId])
+  @@map("passport_qr_sessions")
+}
+
+// ============================================
+// MODEL: PassportSkemExportLog (audit SKEM export generations)
+// ============================================
+
+model PassportSkemExportLog {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  cohortId             String
+  generatedByUserId    String
+  generatedAt          DateTime @default(now())
+  rowCount             Int
+  filterJson           Json
+  csvChecksumSha256    String
+  downloadCount        Int      @default(1)
+
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  cohort        Cohort       @relation(fields: [cohortId], references: [id])
+  generator     User         @relation("PassportSkemExportGenerator", fields: [generatedByUserId], references: [id])
+
+  @@index([organizationId, cohortId, generatedAt(sort: Desc)])
+  @@map("passport_skem_export_logs")
+}

@@ -65,6 +65,20 @@ model Organization {
   pairingRequests  PairingRequest[]
   bulkPairingBatches BulkPairingBatch[]
 
+  // M04 Pulse & Journal relations
+  pulseChecks      PulseCheck[]    @relation("PulseCheckOrg")
+  journalDrafts    JournalDraft[]  @relation("JournalDraftOrg")
+  journals         Journal[]       @relation("JournalOrg")
+  rubrikScores     RubrikScore[]   @relation("RubrikScoreOrg")
+  redFlagEvents    RedFlagEvent[]  @relation("RedFlagOrg")
+  followUpRecords  FollowUpRecord[] @relation("FollowUpOrg")
+
+  // M05 Passport Digital relations
+  passportEntries       PassportEntry[]
+  passportEvidenceUploads PassportEvidenceUpload[]
+  passportQrSessions    PassportQrSession[]
+  passportSkemExportLogs PassportSkemExportLog[]
+
   @@index([status])
   @@map("organizations")
 }
@@ -102,6 +116,18 @@ model Cohort {
   kasuhPairs        KasuhPair[]
   pairingRequests   PairingRequest[]
   bulkPairingBatches BulkPairingBatch[]
+
+  // M04 Pulse & Journal relations
+  pulseChecks       PulseCheck[]    @relation("CohortPulseChecks")
+  journalDrafts     JournalDraft[]  @relation("CohortJournalDrafts")
+  journals          Journal[]       @relation("CohortJournals")
+  rubrikScores      RubrikScore[]   @relation("CohortRubrikScores")
+  redFlagEvents     RedFlagEvent[]  @relation("CohortRedFlags")
+
+  // M05 Passport Digital relations
+  passportEntries       PassportEntry[]
+  passportQrSessions    PassportQrSession[]
+  passportSkemExportLogs PassportSkemExportLog[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])

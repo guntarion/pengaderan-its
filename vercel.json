@@ -27,6 +27,26 @@
     {
       "path": "/api/cron/daily-scan",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/m05-escalation",
+      "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/m05-retention-purge",
+      "schedule": "0 20 1 * *"
+    },
+    {
+      "path": "/api/cron/m04-retention-purge",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/m04-journal-auto-lock",
+      "schedule": "0 0 * * 3"
+    },
+    {
+      "path": "/api/cron/m04-red-flag-escalate",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

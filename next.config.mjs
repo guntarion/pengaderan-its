@@ -1,3 +1,14 @@
+import withPWAInit from 'next-pwa';
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  register: false,          // manual registration so we don't replace M15 push SW
+  skipWaiting: true,
+  sw: 'sw.js',              // use existing sw.js file (M15 already defined handlers)
+  disable: process.env.NODE_ENV === 'development',  // disable in dev to avoid caching issues
+  buildExcludes: [/middleware-manifest\.json$/],
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -95,4 +106,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);

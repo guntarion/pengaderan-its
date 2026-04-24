@@ -385,6 +385,60 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
+  /* PULSE & JURNAL — M04 Maba daily pulse + weekly journal             */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Pulse & Jurnal',
+    roles: ['MABA'],
+    children: [
+      {
+        name: 'Pulse Harian',
+        icon: 'solar:heart-pulse-linear',
+        id: uniqueId(),
+        url: '/dashboard/pulse',
+        isPro: false,
+        roles: ['MABA'],
+      },
+      {
+        name: 'Jurnal Mingguan',
+        icon: 'solar:notebook-linear',
+        id: uniqueId(),
+        url: '/dashboard/journal',
+        isPro: false,
+        roles: ['MABA'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* KP TOOLS — M04 mood dashboard + journal scoring                    */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Alat KP',
+    roles: ['KP'],
+    children: [
+      {
+        name: 'Nilai Jurnal',
+        icon: 'solar:clipboard-check-linear',
+        id: uniqueId(),
+        url: '/dashboard/kp/journal-review',
+        isPro: false,
+        roles: ['KP'],
+      },
+      {
+        name: 'Mood Kelompok',
+        icon: 'solar:chart-line-duotone',
+        id: uniqueId(),
+        url: '/dashboard/kp/mood',
+        isPro: false,
+        roles: ['KP'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
   /* STRUKTUR ANGKATAN — KP Group, Buddy, Kasuh, Pairing (SC/OC)       */
   /* ----------------------------------------------------------------- */
   {
@@ -426,6 +480,93 @@ const SidebarContent: MenuItem[] = [
             url: '/admin/struktur/pairing-requests',
             isPro: false,
             roles: ['SC', 'SUPERADMIN'],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* PASSPORT DIGITAL — M05                                              */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Passport Digital',
+    roles: ALL_NAWASENA,
+    children: [
+      {
+        name: 'Passport Saya',
+        icon: 'solar:passport-linear',
+        id: uniqueId(),
+        url: '/dashboard/passport',
+        isPro: false,
+        roles: ALL_NAWASENA,
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* VERIFIKASI PASSPORT — Untuk verifikator                             */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Verifikasi Passport',
+    roles: ['KP', 'KASUH', 'DOSEN_WALI', 'SC', 'SUPERADMIN'],
+    children: [
+      {
+        name: 'Antrian Verifikasi',
+        icon: 'solar:checklist-minimalistic-line-duotone',
+        id: uniqueId(),
+        url: '/dashboard/verifier/queue',
+        isPro: false,
+        roles: ['KP', 'KASUH', 'DOSEN_WALI', 'SC', 'SUPERADMIN'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* ADMIN PASSPORT — SC/SUPERADMIN                                      */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Admin Passport',
+    roles: ADMIN_ROLES,
+    children: [
+      {
+        name: 'Dashboard Cohort',
+        icon: 'solar:chart-2-linear',
+        id: uniqueId(),
+        url: '/admin/passport',
+        isPro: false,
+        roles: ADMIN_ROLES,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Overview Passport',
+            url: '/admin/passport',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+          {
+            id: uniqueId(),
+            name: 'QR Generator',
+            url: '/admin/passport/qr-generator',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+          {
+            id: uniqueId(),
+            name: 'Export SKEM',
+            url: '/admin/passport/skem-export',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+          {
+            id: uniqueId(),
+            name: 'Override Entry',
+            url: '/admin/passport/overrides',
+            isPro: false,
+            roles: ADMIN_ROLES,
           },
         ],
       },
