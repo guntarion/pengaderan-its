@@ -1,0 +1,153 @@
+// prisma/schema/nawasena_event_instance.prisma
+// Domain: Event Instance, RSVP, NPS, Attendance (NAWASENA M06)
+// 4 tables: KegiatanInstance, RSVP, EventNPS, Attendance
+// 3 enums: InstanceStatus, RSVPStatus, AttendanceStatus
+//
+// M08 CONTRACT: Attendance stub — only 6 core fields (id, instanceId, userId, organizationId, status, notedAt)
+// STUB: M08 may ADD fields but must NOT REMOVE or RENAME existing 6 fields
+
+// ============================================
+// ENUMS — Event Instance
+// ============================================
+
+enum InstanceStatus {
+  PLANNED    // Instance ready, accepts RSVP
+  RUNNING    // Event sedang berlangsung (RSVP closed, NPS not yet)
+  DONE       // Event selesai, NPS window active (up to 7 days)
+  CANCELLED  // Event dibatalkan (RSVP notified, NPS disabled)
+}
+
+enum RSVPStatus {
+  CONFIRMED  // Slot secured
+  WAITLIST   // Waitlist, FIFO by respondedAt
+  DECLINED   // User cancelled
+}
+
+enum AttendanceStatus {
+  HADIR  // Present
+  IZIN   // Excused (permission granted)
+  SAKIT  // Excused (sick)
+  ALPA   // Absent without permission
+}
+
+// ============================================
+// MODEL: KegiatanInstance (event execution)
+// ============================================
+
+model KegiatanInstance {
+  id              String         @id @default(uuid())
+  kegiatanId      String         // FK → Kegiatan.id (natural ID e.g. "K4.05")
+  cohortId        String         // FK → Cohort
+  organizationId  String         // FK → Organization (denormalized for RLS)
+  scheduledAt     DateTime       // UTC scheduled start
+  executedAt      DateTime?      // UTC actual execution (set when OC marks DONE)
+  location        String         @db.VarChar(500) // physical or online link
+  capacity        Int?           // null = unlimited; max 10000 via CHECK
+  status          InstanceStatus @default(PLANNED)
+  notesPanitia    String?        @db.Text // internal OC+SC notes
+  materiLinkUrl   String?        // pre-read / materi link
+  picRoleHint     String?        // denormalized PIC hint from Kegiatan or override
+  npsRequestedAt  DateTime?      // marker for NPS trigger dedupe
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  kegiatan     Kegiatan     @relation("KegiatanInstances", fields: [kegiatanId], references: [id], onDelete: Restrict)
+  cohort       Cohort       @relation("CohortKegiatanInstances", fields: [cohortId], references: [id], onDelete: Restrict)
+  organization Organization @relation("OrgKegiatanInstances", fields: [organizationId], references: [id], onDelete: Restrict)
+  rsvps        RSVP[]       @relation("InstanceRSVPs")
+  attendances  Attendance[] @relation("InstanceAttendances")
+  npsEntries   EventNPS[]   @relation("InstanceNPS")
+
+  @@index([organizationId, cohortId, status, scheduledAt])
+  @@index([cohortId, status, scheduledAt])
+  @@index([kegiatanId, scheduledAt])
+  @@index([status, executedAt])
+  @@index([organizationId, status, scheduledAt])
+  @@map("kegiatan_instances")
+}
+
+// ============================================
+// MODEL: RSVP (single status per user per instance)
+// ============================================
+
+model RSVP {
+  id             String     @id @default(uuid())
+  instanceId     String     // FK → KegiatanInstance
+  userId         String     // FK → User
+  organizationId String     // FK → Organization (denormalized for RLS)
+  status         RSVPStatus
+  respondedAt    DateTime   @default(now()) // updated on each status change; basis FIFO
+  cancelledAt    DateTime?  // set when DECLINED
+  promotedAt     DateTime?  // set when promoted from WAITLIST to CONFIRMED
+  waitlistPosition Int?     // position in waitlist (null when CONFIRMED or DECLINED)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  instance     KegiatanInstance @relation("InstanceRSVPs", fields: [instanceId], references: [id], onDelete: Cascade)
+  user         User             @relation("UserRSVPs", fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization     @relation("OrgRSVPs", fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([instanceId, userId])
+  @@index([instanceId, status, respondedAt])
+  @@index([userId, status, respondedAt(sort: Desc)])
+  @@index([organizationId, instanceId])
+  @@map("rsvps")
+}
+
+// ============================================
+// MODEL: EventNPS (immutable post-event feedback)
+// ============================================
+
+model EventNPS {
+  id             String   @id @default(uuid())
+  instanceId     String   // FK → KegiatanInstance
+  userId         String   // FK → User
+  organizationId String   // FK → Organization (denormalized for RLS)
+  npsScore       Int      // 0-10 (CHECK constraint in migration)
+  feltSafe       Int      // 1-5 (CHECK constraint in migration)
+  meaningful     Int      // 1-5 (CHECK constraint in migration)
+  comment        String?  @db.Text // max 500 chars, optional
+  recordedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations (immutable by design — updatedAt unused)
+  instance     KegiatanInstance @relation("InstanceNPS", fields: [instanceId], references: [id], onDelete: Cascade)
+  user         User             @relation("UserEventNPS", fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization     @relation("OrgEventNPS", fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, instanceId])
+  @@index([instanceId, recordedAt])
+  @@index([organizationId, instanceId])
+  @@map("event_nps")
+}
+
+// ============================================
+// MODEL: Attendance (STUB M06 — additive contract for M08)
+// Core 6 fields LOCKED: id, instanceId, userId, organizationId, status, notedAt
+// M08 may ADD fields but must NOT REMOVE or RENAME any of these 6 fields
+// ============================================
+
+model Attendance {
+  id             String           @id @default(uuid())
+  instanceId     String           // FK → KegiatanInstance
+  userId         String           // FK → User
+  organizationId String           // FK → Organization (denormalized for RLS)
+  status         AttendanceStatus
+  notedAt        DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  instance     KegiatanInstance @relation("InstanceAttendances", fields: [instanceId], references: [id], onDelete: Cascade)
+  user         User             @relation("UserAttendances", fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization     @relation("OrgAttendances", fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([instanceId, userId])
+  @@index([instanceId, status])
+  @@index([userId, status, notedAt(sort: Desc)])
+  @@index([organizationId, instanceId])
+  @@map("attendances")
+}

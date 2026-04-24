@@ -79,6 +79,18 @@ model Organization {
   passportQrSessions    PassportQrSession[]
   passportSkemExportLogs PassportSkemExportLog[]
 
+  // M06 Event Instance back-relations
+  kegiatanInstances KegiatanInstance[] @relation("OrgKegiatanInstances")
+  rsvps             RSVP[]             @relation("OrgRSVPs")
+  eventNpsEntries   EventNPS[]         @relation("OrgEventNPS")
+  attendances       Attendance[]       @relation("OrgAttendances")
+
+  // M07 Time Capsule & Life Map relations
+  timeCapsuleEntries      TimeCapsuleEntry[]
+  timeCapsuleAttachments  TimeCapsuleAttachment[]
+  lifeMaps                LifeMap[]
+  lifeMapUpdates          LifeMapUpdate[]
+
   @@index([status])
   @@map("organizations")
 }
@@ -100,6 +112,11 @@ model Cohort {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   archivedAt     DateTime?
+
+  // M07: F2/F4 phase dates for Life Map milestone timing
+  f2StartDate    DateTime?   // fase F2 mulai
+  f2EndDate      DateTime?   // fase F2 selesai
+  f4EndDate      DateTime?   // fase F4 closing (untuk retention Life Map)
 
   // Relations
   organization    Organization     @relation(fields: [organizationId], references: [id])
@@ -128,6 +145,15 @@ model Cohort {
   passportEntries       PassportEntry[]
   passportQrSessions    PassportQrSession[]
   passportSkemExportLogs PassportSkemExportLog[]
+
+  // M06 Event Instance back-relations
+  kegiatanInstances KegiatanInstance[] @relation("CohortKegiatanInstances")
+
+  // M07 Time Capsule & Life Map relations
+  timeCapsuleEntries      TimeCapsuleEntry[]
+  timeCapsuleAttachments  TimeCapsuleAttachment[]
+  lifeMaps                LifeMap[]
+  lifeMapUpdates          LifeMapUpdate[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])

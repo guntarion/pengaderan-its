@@ -166,6 +166,9 @@ model Kegiatan {
   anchors         AnchorRef[]
   passportItems   PassportItem[]
 
+  // M06 back-relation
+  instances       KegiatanInstance[] @relation("KegiatanInstances")
+
   @@index([fase])
   @@index([kategori])
   @@index([nilai])

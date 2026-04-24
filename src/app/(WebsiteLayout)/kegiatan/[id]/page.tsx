@@ -18,6 +18,8 @@ import { KegiatanAnchorList } from '@/components/kegiatan/KegiatanAnchorList';
 import { KegiatanPassportRelated } from '@/components/kegiatan/KegiatanPassportRelated';
 import { KegiatanPrasyaratLink } from '@/components/kegiatan/KegiatanPrasyaratLink';
 import { MarkdownRender } from '@/components/shared/MarkdownRender';
+import { InstanceCardPublic } from '@/components/event/InstanceCardPublic';
+import { getPublicUpcomingForKegiatan } from '@/lib/event/services/instance.service';
 
 export const revalidate = 3600; // 1 hour ISR
 
@@ -60,7 +62,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function KegiatanDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const kegiatan = await getKegiatanDetail(id, null);
+  const [kegiatan, upcomingInstances] = await Promise.all([
+    getKegiatanDetail(id, null),
+    getPublicUpcomingForKegiatan(id).catch(() => []),
+  ]);
 
   if (!kegiatan) {
     notFound();
@@ -124,6 +129,20 @@ export default async function KegiatanDetailPage({ params }: PageProps) {
 
         {/* Prerequisites */}
         <KegiatanPrasyaratLink prasyaratIds={kegiatan.prasyaratIds} />
+
+        {/* Upcoming Sessions */}
+        {upcomingInstances.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-sky-100 dark:border-sky-900 p-5">
+            <h2 className="font-semibold text-gray-800 dark:text-gray-200 mb-4">
+              Sesi Mendatang ({upcomingInstances.length})
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {upcomingInstances.map((inst) => (
+                <InstanceCardPublic key={inst.id} instance={inst} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

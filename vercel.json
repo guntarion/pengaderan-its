@@ -47,6 +47,14 @@
     {
       "path": "/api/cron/m04-red-flag-escalate",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/m07-orphan-attachment",
+      "schedule": "30 4 * * *"
+    },
+    {
+      "path": "/api/cron/m07-milestone-reminder",
+      "schedule": "0 1 * * *"
     }
   ]
 }

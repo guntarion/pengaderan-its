@@ -506,6 +506,125 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
+  /* KEGIATAN — M06 Event Listing + RSVP + NPS                          */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Kegiatan',
+    roles: ['MABA'],
+    children: [
+      {
+        name: 'Kegiatan Saya',
+        icon: 'solar:calendar-mark-linear',
+        id: uniqueId(),
+        url: '/dashboard/kegiatan',
+        isPro: false,
+        roles: ['MABA'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* TIME CAPSULE — M07 Catatan & Refleksi Maba                         */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Time Capsule',
+    roles: ['MABA'],
+    children: [
+      {
+        name: 'Catatan Saya',
+        icon: 'solar:notebook-bookmark-linear',
+        id: uniqueId(),
+        url: '/dashboard/time-capsule',
+        isPro: false,
+        roles: ['MABA'],
+      },
+      {
+        name: 'Tulis Baru',
+        icon: 'solar:pen-new-square-line-duotone',
+        id: uniqueId(),
+        url: '/dashboard/time-capsule/new',
+        isPro: false,
+        roles: ['MABA'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* LIFE MAP — M07 Goal SMART per 6 area kehidupan                    */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Life Map',
+    roles: ['MABA'],
+    children: [
+      {
+        name: 'Peta Tujuan Hidup',
+        icon: 'solar:target-linear',
+        id: uniqueId(),
+        url: '/dashboard/life-map',
+        isPro: false,
+        roles: ['MABA'],
+      },
+      {
+        name: 'Tambah Goal',
+        icon: 'solar:add-circle-linear',
+        id: uniqueId(),
+        url: '/dashboard/life-map/new',
+        isPro: false,
+        roles: ['MABA'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* PORTFOLIO — M07 Ringkasan Perjalanan NAWASENA                      */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Portfolio',
+    roles: ['MABA', 'KASUH'],
+    children: [
+      {
+        name: 'Portfolio Saya',
+        icon: 'solar:case-round-minimalistic-linear',
+        id: uniqueId(),
+        url: '/dashboard/portfolio',
+        isPro: false,
+        roles: ['MABA'],
+      },
+      {
+        name: 'Catatan Adik Asuh',
+        icon: 'solar:notebook-minimalistic-linear',
+        id: uniqueId(),
+        url: '/dashboard/kasuh/adik-asuh',
+        isPro: false,
+        roles: ['KASUH'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* KELOLA KEGIATAN — M06 OC Hub                                        */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Kelola Kegiatan',
+    roles: ['OC', 'SC', 'SUPERADMIN'],
+    children: [
+      {
+        name: 'Daftar Sesi',
+        icon: 'solar:calendar-date-linear',
+        id: uniqueId(),
+        url: '/dashboard/oc/kegiatan',
+        isPro: false,
+        roles: ['OC', 'SC', 'SUPERADMIN'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
   /* VERIFIKASI PASSPORT — Untuk verifikator                             */
   /* ----------------------------------------------------------------- */
   {

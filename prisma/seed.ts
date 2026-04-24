@@ -23,6 +23,9 @@ import { seedNotificationRules } from './seed/notifications-rules';
 import { seedNotificationPreferences } from './seed/notifications-preferences';
 import { seedJournalReflectionRubric } from './seed/m04-rubric-journal-reflection';
 import { seedM05SampleData } from './seed/m05-sample-data';
+import { seedEventInstanceSampleData } from './seed/event-instance-sample';
+import { seedM07NotificationTemplates } from './seed/m07-notification-templates';
+import { seedM07SampleData } from './seed/m07-sample-data';
 
 const log = createLogger('seed');
 const prisma = new PrismaClient();
@@ -335,6 +338,28 @@ async function main() {
   if (process.env.NODE_ENV !== 'production') {
     log.info('Starting M05 passport sample data seed');
     await seedM05SampleData(prisma);
+  }
+
+  // ========================================
+  // 8. M06: Event Instance sample data (dev only)
+  // ========================================
+  if (process.env.NODE_ENV !== 'production') {
+    log.info('Starting M06 event instance sample data seed');
+    await seedEventInstanceSampleData(prisma);
+  }
+
+  // ========================================
+  // 9. M07: Time Capsule & Life Map notification templates
+  // ========================================
+  log.info('Starting M07 notification templates seed');
+  await seedM07NotificationTemplates(prisma, superAdmin.id);
+
+  // ========================================
+  // 10. M07: Time Capsule & Life Map sample data (dev only)
+  // ========================================
+  if (process.env.NODE_ENV !== 'production') {
+    log.info('Starting M07 Time Capsule & Life Map sample data seed');
+    await seedM07SampleData(prisma);
   }
 
   // ========================================

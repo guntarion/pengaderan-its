@@ -81,6 +81,11 @@ model User {
   shareContact    Boolean  @default(true) // opt-out: false = hide contact from peers
   interests       Json     @default("[]")  // array of interest strings for Kasuh matchmaking
 
+  // M07: Time Capsule & Life Map share settings
+  timeCapsuleShareDefault Boolean @default(false) // global share default for new TC entries
+  lifeMapShareDefault     Boolean @default(false) // global share default for new LM goals
+  extendedRetention       Int     @default(0)     // 0-3 years retention extension
+
   // Audit fields
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -149,6 +154,17 @@ model User {
   passportEntriesAsOverridden PassportEntry[]        @relation("PassportEntryOverride")
   passportQrSessionsCreated   PassportQrSession[]    @relation("PassportQrSessionCreator")
   passportSkemExports         PassportSkemExportLog[]  @relation("PassportSkemExportGenerator")
+
+  // M06 Event Instance back-relations
+  rsvps               RSVP[]        @relation("UserRSVPs")
+  eventNpsEntries     EventNPS[]    @relation("UserEventNPS")
+  attendances         Attendance[]  @relation("UserAttendances")
+
+  // M07 Time Capsule & Life Map back-relations
+  timeCapsuleEntries      TimeCapsuleEntry[]
+  timeCapsuleAttachments  TimeCapsuleAttachment[]
+  lifeMaps                LifeMap[]
+  lifeMapUpdates          LifeMapUpdate[]
 
   // M04 Pulse & Journal relations
   pulseChecks             PulseCheck[]    @relation("UserPulseChecks")
