@@ -55,6 +55,34 @@
     {
       "path": "/api/cron/m07-milestone-reminder",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/qr-session-expire",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/m08-auto-running",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/m08-evaluation-overdue-flag",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/m09-precompute-weekly-aggregate",
+      "schedule": "0 22 * * 6"
+    },
+    {
+      "path": "/api/cron/m09-daily-miss-check",
+      "schedule": "0 21 * * 1-5"
+    },
+    {
+      "path": "/api/cron/m09-kasuh-overdue-check",
+      "schedule": "0 10 * * 6"
+    },
+    {
+      "path": "/api/cron/m09-retention-purge",
+      "schedule": "30 3 * * *"
     }
   ]
 }

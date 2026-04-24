@@ -160,11 +160,26 @@ model User {
   eventNpsEntries     EventNPS[]    @relation("UserEventNPS")
   attendances         Attendance[]  @relation("UserAttendances")
 
+  // M08 Event Execution back-relations
+  outputsUploaded           OutputUpload[]        @relation("OutputUploadUploader")
+  evaluationsFilled         KegiatanEvaluation[]  @relation("KegiatanEvaluationFilledBy")
+  qrSessionsCreated         KegiatanQRSession[]   @relation("KegiatanQRSessionCreator")
+  instancesCancelled        KegiatanInstance[]    @relation("KegiatanInstanceCancelledBy")
+  instancesRescheduled      KegiatanInstance[]    @relation("KegiatanInstanceRescheduledBy")
+  attendancesNoted          Attendance[]          @relation("AttendanceNotedBy")
+  attendancesVerified       Attendance[]          @relation("AttendanceVerifier")
+
   // M07 Time Capsule & Life Map back-relations
   timeCapsuleEntries      TimeCapsuleEntry[]
   timeCapsuleAttachments  TimeCapsuleAttachment[]
   lifeMaps                LifeMap[]
   lifeMapUpdates          LifeMapUpdate[]
+
+  // M09 KP & Kasuh Logbook back-relations
+  kpLogDailies        KPLogDaily[]  @relation("KPLogDailyKP")
+  kpLogWeeklies       KPLogWeekly[] @relation("KPLogWeeklyKP")
+  kasuhLogsAsKasuh    KasuhLog[]    @relation("KasuhLogKasuh")
+  kasuhLogsAsMaba     KasuhLog[]    @relation("KasuhLogMaba")
 
   // M04 Pulse & Journal relations
   pulseChecks             PulseCheck[]    @relation("UserPulseChecks")

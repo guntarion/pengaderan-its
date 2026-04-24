@@ -3,8 +3,8 @@
 // 4 tables: KegiatanInstance, RSVP, EventNPS, Attendance
 // 3 enums: InstanceStatus, RSVPStatus, AttendanceStatus
 //
-// M08 CONTRACT: Attendance stub — only 6 core fields (id, instanceId, userId, organizationId, status, notedAt)
-// STUB: M08 may ADD fields but must NOT REMOVE or RENAME existing 6 fields
+// M08: Extended with lifecycle fields (version, cancelledAt, etc.) and Attendance extended fields.
+// ADDITIVE ONLY: all new fields are nullable or have defaults — backward compatible.
 
 // ============================================
 // ENUMS — Event Instance
@@ -51,6 +51,19 @@ model KegiatanInstance {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
+  // M08: Optimistic locking + cancellation + reschedule + aggregate cache
+  version                  Int       @default(0)
+  cancelledAt              DateTime?
+  cancelledById            String?
+  cancellationReason       String?   @db.Text
+  rescheduleCount          Int       @default(0)
+  lastRescheduledAt        DateTime?
+  lastRescheduledById      String?
+  cachedAggregateJson      Json?     // { attendancePct, npsScore, npsN, computedAt }
+  notificationFailedCount  Int       @default(0)
+  // locationLatLng: reserved for geo-fence V2, Unsupported type — omitted from Prisma schema
+  // raw SQL: ALTER TABLE kegiatan_instances ADD COLUMN location_lat_lng geography(Point, 4326)
+
   // Relations
   kegiatan     Kegiatan     @relation("KegiatanInstances", fields: [kegiatanId], references: [id], onDelete: Restrict)
   cohort       Cohort       @relation("CohortKegiatanInstances", fields: [cohortId], references: [id], onDelete: Restrict)
@@ -59,11 +72,20 @@ model KegiatanInstance {
   attendances  Attendance[] @relation("InstanceAttendances")
   npsEntries   EventNPS[]   @relation("InstanceNPS")
 
+  // M08 back-relations
+  cancelledBy        User?                @relation("KegiatanInstanceCancelledBy", fields: [cancelledById], references: [id])
+  lastRescheduledBy  User?                @relation("KegiatanInstanceRescheduledBy", fields: [lastRescheduledById], references: [id])
+  outputs            OutputUpload[]       @relation("InstanceOutputs")
+  evaluation         KegiatanEvaluation?  @relation("InstanceEvaluation")
+  qrSessions         KegiatanQRSession[]  @relation("InstanceQRSessions")
+
   @@index([organizationId, cohortId, status, scheduledAt])
   @@index([cohortId, status, scheduledAt])
   @@index([kegiatanId, scheduledAt])
   @@index([status, executedAt])
   @@index([organizationId, status, scheduledAt])
+  @@index([organizationId, status, executedAt]) // M08: evaluation overdue cron
+  @@index([cancelledAt])                         // M08: analytics
   @@map("kegiatan_instances")
 }
 
@@ -125,9 +147,10 @@ model EventNPS {
 }
 
 // ============================================
-// MODEL: Attendance (STUB M06 — additive contract for M08)
+// MODEL: Attendance (M06 core + M08 extensions)
 // Core 6 fields LOCKED: id, instanceId, userId, organizationId, status, notedAt
-// M08 may ADD fields but must NOT REMOVE or RENAME any of these 6 fields
+// M08 adds: notedById, scanMethod, scannedAt, scanLocation, clientScanId,
+//           qrSessionId, isWalkin, notes, verifiedAt, verifierId
 // ============================================
 
 model Attendance {
@@ -140,14 +163,34 @@ model Attendance {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
-  // Relations
+  // M08: Extended fields (all additive — nullable or with defaults)
+  notedById      String?          // FK → User (OC actor; null = self-scan by Maba)
+  scanMethod     ScanMethod       @default(MANUAL)
+  scannedAt      DateTime?        // client-side scan timestamp (may differ from notedAt)
+  scanLocation   String?          @db.VarChar(500) // free text "Pintu utama" or lat,lng
+  clientScanId   String?          @db.VarChar(36) // UUID v4 for offline idempotency; partial unique in SQL
+  qrSessionId    String?          // FK → KegiatanQRSession (null for non-QR methods)
+  isWalkin       Boolean          @default(false) // true = scanned without RSVP CONFIRMED
+  notes          String?          @db.Text        // max 200 chars enforced via CHECK in SQL
+  verifiedAt     DateTime?        // reserved M07 verifier flow
+  verifierId     String?          // FK → User (reserved M07)
+
+  // Relations (core)
   instance     KegiatanInstance @relation("InstanceAttendances", fields: [instanceId], references: [id], onDelete: Cascade)
   user         User             @relation("UserAttendances", fields: [userId], references: [id], onDelete: Cascade)
   organization Organization     @relation("OrgAttendances", fields: [organizationId], references: [id], onDelete: Restrict)
+
+  // M08: Extended relations
+  notedBy    User?              @relation("AttendanceNotedBy", fields: [notedById], references: [id])
+  qrSession  KegiatanQRSession? @relation("AttendanceQRSession", fields: [qrSessionId], references: [id])
+  verifier   User?              @relation("AttendanceVerifier", fields: [verifierId], references: [id])
 
   @@unique([instanceId, userId])
   @@index([instanceId, status])
   @@index([userId, status, notedAt(sort: Desc)])
   @@index([organizationId, instanceId])
+  @@index([qrSessionId, status])         // M08: per-session scan analytics
+  @@index([instanceId, scanMethod])      // M08: bulk vs scan ratio
+  @@index([instanceId, isWalkin])        // M08: walkin filter
   @@map("attendances")
 }

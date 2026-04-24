@@ -32,6 +32,10 @@ const AUDITED_MODELS = new Set([
   'KasuhPair',
   'PairingRequest',
   'BulkPairingBatch',
+  // M08 Event Execution
+  'OutputUpload',
+  'KegiatanEvaluation',
+  'KegiatanQRSession',
 ]);
 
 function getAuditAction(model: string, operation: string): string {

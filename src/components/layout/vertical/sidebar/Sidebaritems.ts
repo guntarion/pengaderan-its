@@ -381,6 +381,14 @@ const SidebarContent: MenuItem[] = [
         isPro: false,
         roles: ['KASUH'],
       },
+      {
+        name: 'Adik Asuh Saya',
+        icon: 'solar:notebook-bookmark-linear',
+        id: uniqueId(),
+        url: '/dashboard/kasuh',
+        isPro: false,
+        roles: ['KASUH'],
+      },
     ],
   },
 
@@ -412,7 +420,7 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
-  /* KP TOOLS — M04 mood dashboard + journal scoring                    */
+  /* KP TOOLS — M04 mood dashboard + journal scoring + M09 logbook     */
   /* ----------------------------------------------------------------- */
   {
     isPro: false,
@@ -432,6 +440,30 @@ const SidebarContent: MenuItem[] = [
         icon: 'solar:chart-line-duotone',
         id: uniqueId(),
         url: '/dashboard/kp/mood',
+        isPro: false,
+        roles: ['KP'],
+      },
+      {
+        name: 'Log Daily',
+        icon: 'solar:checklist-minimalistic-line-duotone',
+        id: uniqueId(),
+        url: '/dashboard/kp/log/daily',
+        isPro: false,
+        roles: ['KP'],
+      },
+      {
+        name: 'Weekly Debrief',
+        icon: 'solar:notebook-linear',
+        id: uniqueId(),
+        url: '/dashboard/kp/log/weekly',
+        isPro: false,
+        roles: ['KP'],
+      },
+      {
+        name: 'Peer Debriefs',
+        icon: 'solar:users-group-rounded-linear',
+        id: uniqueId(),
+        url: '/dashboard/kp/peer-debriefs',
         isPro: false,
         roles: ['KP'],
       },
@@ -606,7 +638,7 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
-  /* KELOLA KEGIATAN — M06 OC Hub                                        */
+  /* KELOLA KEGIATAN — M06/M08 OC Hub                                    */
   /* ----------------------------------------------------------------- */
   {
     isPro: false,
@@ -620,6 +652,33 @@ const SidebarContent: MenuItem[] = [
         url: '/dashboard/oc/kegiatan',
         isPro: false,
         roles: ['OC', 'SC', 'SUPERADMIN'],
+      },
+      {
+        name: 'Buat Sesi Baru',
+        icon: 'solar:calendar-add-linear',
+        id: uniqueId(),
+        url: '/dashboard/oc/kegiatan/new',
+        isPro: false,
+        roles: ['OC', 'SC', 'SUPERADMIN'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* KEHADIRAN MABA — M08 Scan Attendance PWA                            */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Kehadiran',
+    roles: ['MABA'],
+    children: [
+      {
+        name: 'Scan Kehadiran',
+        icon: 'solar:qr-code-linear',
+        id: uniqueId(),
+        url: '/dashboard/attendance/scan',
+        isPro: false,
+        roles: ['MABA'],
       },
     ],
   },

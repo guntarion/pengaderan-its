@@ -15,7 +15,7 @@ import { SkeletonTable, SkeletonPageHeader } from '@/components/shared/skeletons
 import { toast } from '@/lib/toast';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
-import { CalendarIcon, ChevronRightIcon, UsersIcon } from 'lucide-react';
+import { CalendarIcon, ChevronRightIcon, UsersIcon, PlusIcon } from 'lucide-react';
 
 interface InstanceSummary {
   id: string;
@@ -70,9 +70,18 @@ export default function OCKegiatanHubPage() {
             homeHref="/dashboard"
             className="text-white/70 mb-3 text-sm"
           />
-          <div className="flex items-center gap-3">
-            <CalendarIcon className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Kelola Kegiatan</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CalendarIcon className="h-6 w-6" />
+              <h1 className="text-xl font-bold">Kelola Kegiatan</h1>
+            </div>
+            <Link
+              href="/dashboard/oc/kegiatan/new"
+              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-sm font-medium px-3 py-1.5 rounded-xl transition-colors border border-white/30"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Buat Baru
+            </Link>
           </div>
           <p className="text-sm text-white/80 mt-1">Daftar sesi kegiatan yang dikelola OC</p>
         </div>

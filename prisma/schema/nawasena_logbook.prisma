@@ -1,0 +1,187 @@
+// prisma/schema/nawasena_logbook.prisma
+// Domain: KP & Kasuh Logbook (NAWASENA M09)
+// 3 models: KPLogDaily, KPLogWeekly, KasuhLog
+// 1 enum: KasuhLogAttendance
+// RLS: applied via raw SQL in migration (org isolation pattern from M01)
+// Note: No subdirectory support — flat file in prisma/schema/
+
+// ============================================
+// ENUMS — Logbook (M09)
+// ============================================
+
+enum KasuhLogAttendance {
+  MET     // Kasuh sudah bertemu adik asuh di cycle ini
+  NOT_MET // Kasuh belum bertemu (skip cycle valid dengan alasan)
+}
+
+// ============================================
+// MODEL: KPLogDaily — daily stand-up log per KP per date
+// Satu baris per KP per tanggal.
+// ============================================
+
+model KPLogDaily {
+  id             String   @id @default(cuid())
+  organizationId String
+  cohortId       String
+  kpGroupId      String
+  kpUserId       String
+
+  // Tanggal lokal Asia/Jakarta
+  date           DateTime @db.Date
+
+  // Mood aggregate (1-5)
+  moodAvg        Int
+  // Snapshot dari M04 PulseCheck saat form load (analytics mismatch)
+  suggestedMood  Float?
+  responderCount Int?
+  totalMembers   Int?
+
+  // Red flags (String[] → GIN index di migration)
+  // Valid values: MENANGIS, SHUTDOWN, KONFLIK, INJURY, WITHDRAW, LAINNYA
+  redFlagsObserved String[] @default([])
+  redFlagOther     String?  @db.VarChar(100)
+
+  // Anekdot singkat (max 500 app-layer)
+  anecdoteShort    String?  @db.Text
+
+  // Cross-module ref ke M10 SafeguardIncident (soft ref, not FK enforced V1)
+  cascadedIncidentId String?
+
+  // Timestamps
+  recordedAt  DateTime @default(now())
+  editedAt    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation("KPLogDailyOrg", fields: [organizationId], references: [id])
+  cohort       Cohort       @relation("KPLogDailyCohort", fields: [cohortId], references: [id])
+  kpGroup      KPGroup      @relation("KPLogDailyKPGroup", fields: [kpGroupId], references: [id])
+  kpUser       User         @relation("KPLogDailyKP", fields: [kpUserId], references: [id])
+
+  // Unique: 1 log per KP per tanggal
+  @@unique([kpUserId, date])
+  // Index: SC aggregate + red flag feed
+  @@index([organizationId, cohortId, date])
+  // Index: per-KPGroup history
+  @@index([kpGroupId, date(sort: Desc)])
+  // Index: KP own history 7-30 days
+  @@index([kpUserId, date(sort: Desc)])
+  // GIN index on redFlagsObserved added via raw SQL in migration
+  @@map("kp_log_daily")
+}
+
+// ============================================
+// MODEL: KPLogWeekly — weekly debrief per KP per week
+// Satu baris per KP per weekNumber.
+// ============================================
+
+model KPLogWeekly {
+  id             String   @id @default(cuid())
+  organizationId String
+  cohortId       String
+  kpGroupId      String
+  kpUserId       String
+
+  // ISO week number + year
+  weekNumber     Int
+  yearNumber     Int
+
+  // Context snapshot dates
+  weekStartDate  DateTime? @db.Date
+  weekEndDate    DateTime? @db.Date
+
+  // 3 refleksi (min 50 char app-layer)
+  whatWorked     String   @db.Text
+  whatDidnt      String   @db.Text
+  changesNeeded  String   @db.Text
+
+  // Aggregate snapshot saat submit (reproducibility)
+  // { avgMood, redFlagBreakdown, anecdoteList }
+  contextSnapshot Json?
+
+  // Mood snapshot fields
+  avgMoodSnapshot   Float?
+  redFlagSummary    Json?
+  dailyCount        Int?
+
+  // Timestamps
+  submittedAt  DateTime @default(now())
+  recordedAt   DateTime @default(now())
+  editedAt     DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation("KPLogWeeklyOrg", fields: [organizationId], references: [id])
+  cohort       Cohort       @relation("KPLogWeeklyCohort", fields: [cohortId], references: [id])
+  kpGroup      KPGroup      @relation("KPLogWeeklyKPGroup", fields: [kpGroupId], references: [id])
+  kpUser       User         @relation("KPLogWeeklyKP", fields: [kpUserId], references: [id])
+
+  // Unique: 1 debrief per KP per week per year
+  @@unique([kpUserId, weekNumber, yearNumber])
+  // Index: SC roll-up + peer debrief scope
+  @@index([organizationId, cohortId, weekNumber])
+  // Index: KP own history
+  @@index([kpUserId, weekNumber(sort: Desc)])
+  // Index: peer debrief list ordering
+  @@index([cohortId, weekNumber, submittedAt])
+  @@map("kp_log_weekly")
+}
+
+// ============================================
+// MODEL: KasuhLog — biweekly logbook per pair per cycle
+// Satu baris per pair per cycle.
+// CRITICAL: Maba TIDAK boleh membaca log ini (RLS policy tidak include mabaUserId)
+// ============================================
+
+model KasuhLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  cohortId       String
+
+  // Kasuh pair reference (FK ke KasuhPair M03)
+  pairId         String
+  kasuhUserId    String   // denormalized untuk RLS self-read efisien
+  mabaUserId     String   // denormalized untuk SC query
+
+  // Cycle info
+  cycleNumber    Int
+  cycleDueDate   DateTime? @db.Date
+
+  // Attendance status
+  attendance     KasuhLogAttendance
+
+  // Conditional fields (MET vs NOT_MET)
+  meetingDate       DateTime? @db.Date // null jika NOT_MET
+  attendanceReason  String?   @db.VarChar(200) // alasan NOT_MET (min 10 app-layer)
+  reflection        String?   @db.Text // min 30 jika MET; optional jika NOT_MET
+  flagUrgent        Boolean   @default(false)
+  followupNotes     String?   @db.Text
+
+  // Timestamps
+  submittedAt  DateTime @default(now())
+  recordedAt   DateTime @default(now())
+  editedAt     DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation("KasuhLogOrg", fields: [organizationId], references: [id])
+  cohort       Cohort       @relation("KasuhLogCohort", fields: [cohortId], references: [id])
+  pair         KasuhPair    @relation("KasuhLogPair", fields: [pairId], references: [id])
+  kasuh        User         @relation("KasuhLogKasuh", fields: [kasuhUserId], references: [id])
+  maba         User         @relation("KasuhLogMaba", fields: [mabaUserId], references: [id])
+
+  // Unique: 1 log per pair per cycle
+  @@unique([pairId, cycleNumber])
+  // Index: SC overdue scan + feed
+  @@index([organizationId, cohortId, submittedAt(sort: Desc)])
+  // Index: Kasuh own history
+  @@index([kasuhUserId, submittedAt(sort: Desc)])
+  // Index: SC query "log untuk adik X"
+  @@index([mabaUserId, submittedAt(sort: Desc)])
+  // Index: SC urgent flag feed
+  @@index([cohortId, flagUrgent, submittedAt(sort: Desc)])
+  @@map("kasuh_log")
+}

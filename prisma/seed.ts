@@ -26,6 +26,9 @@ import { seedM05SampleData } from './seed/m05-sample-data';
 import { seedEventInstanceSampleData } from './seed/event-instance-sample';
 import { seedM07NotificationTemplates } from './seed/m07-notification-templates';
 import { seedM07SampleData } from './seed/m07-sample-data';
+import { seedM09LogbookData } from './seed/m09-logbook';
+import { seedM09NotificationRules } from './seed/m09-notification-rules';
+import { seedEventExecutionSampleData } from './seed/event-execution-sample';
 
 const log = createLogger('seed');
 const prisma = new PrismaClient();
@@ -360,6 +363,28 @@ async function main() {
   if (process.env.NODE_ENV !== 'production') {
     log.info('Starting M07 Time Capsule & Life Map sample data seed');
     await seedM07SampleData(prisma);
+  }
+
+  // ========================================
+  // 11. M09: KP & Kasuh Logbook sample data (dev only)
+  // ========================================
+  if (process.env.NODE_ENV !== 'production') {
+    log.info('Starting M09 logbook sample data seed');
+    await seedM09LogbookData(prisma);
+  }
+
+  // ========================================
+  // 11b. M09: Notification rules (always)
+  // ========================================
+  log.info('Starting M09 notification rules seed');
+  await seedM09NotificationRules(prisma, superAdmin.id);
+
+  // ========================================
+  // 12. M08: Event Execution sample data (dev only)
+  // ========================================
+  if (process.env.NODE_ENV !== 'production') {
+    log.info('Starting M08 event execution sample data seed');
+    await seedEventExecutionSampleData(prisma);
   }
 
   // ========================================

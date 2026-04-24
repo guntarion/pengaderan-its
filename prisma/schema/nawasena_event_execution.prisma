@@ -1,0 +1,146 @@
+// prisma/schema/nawasena_event_execution.prisma
+// Domain: Event Execution — OutputUpload, KegiatanEvaluation, KegiatanQRSession
+// NAWASENA M08 — Post-event documentation + QR attendance session
+//
+// New tables:
+//   OutputUpload      — file/link/video/repo per instance
+//   KegiatanEvaluation — post-event evaluation with prefilled metrics
+//   KegiatanQRSession  — attendance QR session (mirror M05 PassportQrSession)
+//
+// 4 new enums: ScanMethod, OutputType, OutputScanStatus, KegiatanQRSessionStatus
+//
+// Note: ScanMethod enum is also used by Attendance in nawasena_event_instance.prisma
+
+// ============================================
+// ENUMS — Event Execution M08
+// ============================================
+
+enum ScanMethod {
+  QR           // Maba scan QR via PWA scanner
+  MANUAL       // OC mark single row via dropdown
+  BULK         // OC bulk-mark batch action
+  SC_OVERRIDE  // SC force-set status (audit-tracked)
+  SYSTEM_AUTO  // Cron auto-set ALPA on DONE transition
+}
+
+enum OutputType {
+  FILE   // S3-uploaded file (PDF, image, doc, etc.)
+  LINK   // Generic URL
+  VIDEO  // YouTube or Google Drive video URL
+  REPO   // Git repository URL (GitHub, GitLab)
+}
+
+enum OutputScanStatus {
+  PENDING     // Upload finalized, scan not yet run
+  CLEAN       // Mime match + safe
+  SUSPICIOUS  // Mime mismatch or signature suspect (quarantine)
+  FAILED      // Scan error (retry)
+  NA          // Non-FILE type — scan not applicable
+}
+
+enum KegiatanQRSessionStatus {
+  ACTIVE   // Session active, scans accepted
+  EXPIRED  // Past expiresAt
+  REVOKED  // OC manual revoke (re-generate QR new)
+}
+
+// ============================================
+// MODEL: OutputUpload — file/link/video/repo per instance
+// ============================================
+
+model OutputUpload {
+  id               String           @id @default(uuid())
+  organizationId   String           // FK → Organization (denormalized for RLS)
+  instanceId       String           // FK → KegiatanInstance
+  uploaderId       String           // FK → User
+  type             OutputType
+  url              String           // S3 URL for FILE; raw URL for LINK/VIDEO/REPO
+  s3Key            String?          @db.VarChar(1000) // only for type=FILE
+  s3Bucket         String?          @db.VarChar(200)  // only for type=FILE
+  caption          String           @db.VarChar(200)
+  originalFilename String?          @db.VarChar(500)  // sanitized; only for type=FILE
+  mimeType         String?          @db.VarChar(200)  // claimed; only for type=FILE
+  realMimeType     String?          @db.VarChar(200)  // server-detected; only for type=FILE
+  sizeBytes        Int?             // only for type=FILE; max 50MB via CHECK
+  scanStatus       OutputScanStatus @default(NA)
+  scanNote         String?          @db.Text
+  checksumSha256   String?          @db.VarChar(64)   // file integrity, optional
+  uploadedAt       DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  organization Organization     @relation("OrgOutputUploads", fields: [organizationId], references: [id], onDelete: Restrict)
+  instance     KegiatanInstance @relation("InstanceOutputs", fields: [instanceId], references: [id], onDelete: Cascade)
+  uploader     User             @relation("OutputUploadUploader", fields: [uploaderId], references: [id], onDelete: Restrict)
+
+  @@index([instanceId, uploadedAt(sort: Desc)])
+  @@index([organizationId, instanceId])
+  @@index([uploaderId])
+  @@index([scanStatus, uploadedAt])
+  @@map("output_uploads")
+}
+
+// ============================================
+// MODEL: KegiatanEvaluation — post-event evaluation (1 per instance)
+// ============================================
+
+model KegiatanEvaluation {
+  id                              String   @id @default(uuid())
+  organizationId                  String   // FK → Organization (denormalized for RLS)
+  instanceId                      String   @unique // FK → KegiatanInstance — 1 eval per instance
+  filledById                      String   // FK → User
+  attendancePct                   Float?   // 0.0–1.0; pre-fill computed at submit
+  attendancePctOverride           Float?   // OC override (audit logged)
+  attendancePctOverrideReason     String?  @db.Text
+  npsScore                        Float?   // 0–10; null if n < 5 responses
+  npsScoreOverride                Float?
+  npsScoreOverrideReason          String?  @db.Text
+  npsResponseCount                Int?     // n at moment of submit
+  redFlagsCount                   Int?     // M10 dependency; null if M10 not live
+  scoreL2agg                      Float?   // 0–100; OC manual input for Kirkpatrick L2
+  notes                           String?  @db.Text // markdown, no DB limit; UI hint 5000 chars
+  filledAt                        DateTime @default(now())
+  submittedLate                   Boolean  @default(false) // true if > 14 days after DONE
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  // Relations
+  organization Organization     @relation("OrgKegiatanEvaluations", fields: [organizationId], references: [id], onDelete: Restrict)
+  instance     KegiatanInstance @relation("InstanceEvaluation", fields: [instanceId], references: [id], onDelete: Cascade)
+  filledBy     User             @relation("KegiatanEvaluationFilledBy", fields: [filledById], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, filledAt(sort: Desc)])
+  @@index([filledById, filledAt(sort: Desc)])
+  @@index([organizationId, redFlagsCount])
+  @@map("kegiatan_evaluations")
+}
+
+// ============================================
+// MODEL: KegiatanQRSession — attendance QR session (mirror M05 PassportQrSession)
+// ============================================
+
+model KegiatanQRSession {
+  id               String                 @id @default(uuid())
+  organizationId   String                 // FK → Organization
+  instanceId       String                 // FK → KegiatanInstance
+  createdByUserId  String                 // FK → User (OC who generated)
+  status           KegiatanQRSessionStatus @default(ACTIVE)
+  createdAt        DateTime               @default(now())
+  expiresAt        DateTime               // default now + 6h; max 12h via app validation
+  revokedAt        DateTime?
+  revokedReason    String?                @db.Text
+  scanCount        Int                    @default(0)    // increment per accepted scan
+  shortCode        String                 @unique @db.VarChar(6) // 6-char alphanumeric fallback
+
+  // Relations
+  organization Organization     @relation("OrgKegiatanQRSessions", fields: [organizationId], references: [id], onDelete: Restrict)
+  instance     KegiatanInstance @relation("InstanceQRSessions", fields: [instanceId], references: [id], onDelete: Cascade)
+  creator      User             @relation("KegiatanQRSessionCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  attendances  Attendance[]     @relation("AttendanceQRSession")
+
+  @@index([organizationId, instanceId, status])
+  @@index([expiresAt, status])   // expiry cron
+  @@index([createdByUserId])
+  @@map("kegiatan_qr_sessions")
+}

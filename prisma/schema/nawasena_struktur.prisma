@@ -63,6 +63,10 @@ model KPGroup {
   creator       User          @relation("KPGroupCreator", fields: [createdBy], references: [id])
   members       KPGroupMember[]
 
+  // M09 KP & Kasuh Logbook back-relations
+  kpLogDailies  KPLogDaily[]  @relation("KPLogDailyKPGroup")
+  kpLogWeeklies KPLogWeekly[] @relation("KPLogWeeklyKPGroup")
+
   @@unique([cohortId, code])
   @@unique([cohortId, kpCoordinatorUserId])
   @@index([organizationId, cohortId, status])
@@ -193,6 +197,9 @@ model KasuhPair {
   pairingRequestsCurrent   PairingRequest[] @relation("PairingRequestCurrentKasuh")
   // Pairing requests that this pair fulfilled
   pairingRequestsFulfilled PairingRequest[] @relation("PairingRequestFulfilledKasuh")
+
+  // M09 KP & Kasuh Logbook back-relation
+  kasuhLogs    KasuhLog[] @relation("KasuhLogPair")
 
   // Partial unique enforced via raw SQL: CREATE UNIQUE INDEX kasuh_pair_active_per_maba
   //   ON "KasuhPair" (cohort_id, maba_user_id) WHERE status = 'ACTIVE'
