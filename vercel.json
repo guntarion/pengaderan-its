@@ -91,6 +91,22 @@
     {
       "path": "/api/cron/m11-retention-purge",
       "schedule": "0 2 1 * *"
+    },
+    {
+      "path": "/api/cron/nightly",
+      "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/cron/redflag-engine",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/triwulan-overdue-reminder",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/triwulan-retention-purge",
+      "schedule": "0 2 1 * *"
     }
   ]
 }

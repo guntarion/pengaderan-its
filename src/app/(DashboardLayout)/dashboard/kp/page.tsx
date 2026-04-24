@@ -2,16 +2,19 @@
 
 /**
  * src/app/(DashboardLayout)/dashboard/kp/page.tsx
- * NAWASENA M10 — KP Coordinator dashboard landing page.
+ * NAWASENA M10 + M13 — KP Coordinator dashboard landing page.
  *
- * Shows the Safe Word quick widget at the very top (above all content),
- * followed by quick links to KP tools.
+ * M13 section: debrief reminder, passport review queue, active red flags count.
+ * M10 section: Safe Word quick widget, quick links to KP tools (existing).
  */
 
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { DynamicBreadcrumb } from '@/components/shared/DynamicBreadcrumb';
 import { SafeWordQuickWidget } from '@/app/(DashboardLayout)/dashboard/kp/components/SafeWordQuickWidget';
+import { createLogger } from '@/lib/logger';
+import type { KPDashboardPayload } from '@/types/dashboard';
 import {
   Users2,
   ClipboardList,
@@ -19,7 +22,12 @@ import {
   BookOpen,
   MessageSquare,
   ChevronRight,
+  AlertTriangle,
+  Bell,
+  ClipboardCheck,
 } from 'lucide-react';
+
+const log = createLogger('m13/dashboard/kp');
 
 const KP_LINKS = [
   {
@@ -75,6 +83,22 @@ const KP_LINKS = [
 export default function KPDashboardPage() {
   const { data: session } = useSession();
   const cohortId = (session?.user as { cohortId?: string })?.cohortId ?? '';
+  const [m13Payload, setM13Payload] = useState<KPDashboardPayload | null>(null);
+
+  useEffect(() => {
+    async function fetchM13() {
+      try {
+        const res = await fetch('/api/dashboard/kp');
+        if (!res.ok) return;
+        const json = await res.json();
+        setM13Payload(json.data ?? null);
+        log.debug('KP M13 payload loaded', { alertCount: json.data?.activeAlerts?.length });
+      } catch (err) {
+        log.warn('KP M13 payload fetch failed', { err });
+      }
+    }
+    fetchM13();
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
@@ -82,6 +106,51 @@ export default function KPDashboardPage() {
 
       {/* Safe Word quick widget — ALWAYS at the very top for KP role */}
       <SafeWordQuickWidget cohortId={cohortId} />
+
+      {/* M13 — Debrief reminder banner */}
+      {m13Payload?.debriefReminder && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 rounded-2xl p-4 flex items-center gap-3">
+          <Bell className="h-5 w-5 text-amber-600 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+              Pengingat Debrief
+            </p>
+            <p className="text-xs text-amber-600 dark:text-amber-500">
+              {m13Payload.debriefReminder}
+            </p>
+          </div>
+          <Link
+            href="/dashboard/kp/log/weekly"
+            className="text-xs font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1 shrink-0"
+          >
+            Buat Log <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
+
+      {/* M13 — Quick stats row */}
+      {m13Payload && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-sky-100 dark:border-sky-900 bg-white dark:bg-slate-800 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <p className="text-xs text-gray-500">Red Flag Aktif</p>
+            </div>
+            <p className="text-2xl font-bold text-gray-800 dark:text-white">
+              {m13Payload.activeAlerts.length}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-sky-100 dark:border-sky-900 bg-white dark:bg-slate-800 p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <ClipboardCheck className="h-4 w-4 text-sky-500" />
+              <p className="text-xs text-gray-500">Passport Review</p>
+            </div>
+            <p className="text-2xl font-bold text-gray-800 dark:text-white">
+              {m13Payload.passportReviewQueue}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Page header */}
       <div className="flex items-center gap-3">

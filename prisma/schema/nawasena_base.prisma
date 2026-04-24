@@ -111,6 +111,15 @@ model Organization {
   mhScreenings             MHScreening[]
   mhReferralLogs           MHReferralLog[]
 
+  // M13 Dashboard Multi-Role back-relations
+  kpiSignals               KPISignal[]    @relation("KPISignalOrg")
+  redFlagAlerts            RedFlagAlert[] @relation("RedFlagAlertOrg")
+
+  // M14 Triwulan Review back-relations
+  triwulanReviews           TriwulanReview[]
+  triwulanSignatureEvents   TriwulanSignatureEvent[]
+  auditSubstansiResults     AuditSubstansiResult[]
+
   @@index([status])
   @@map("organizations")
 }
@@ -188,6 +197,13 @@ model Cohort {
   mhScreenings        MHScreening[]
   mhConsentRecords    MHConsentRecord[]
   mhResearchConsents  MHResearchConsent[]
+
+  // M13 Dashboard Multi-Role back-relations
+  kpiSignals          KPISignal[]    @relation("KPISignalCohort")
+  redFlagAlerts       RedFlagAlert[] @relation("RedFlagAlertCohort")
+
+  // M14 Triwulan Review back-relations
+  triwulanReviews     TriwulanReview[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])

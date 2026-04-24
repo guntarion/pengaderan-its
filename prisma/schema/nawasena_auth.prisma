@@ -219,6 +219,19 @@ model User {
   followUpsGiven          FollowUpRecord[] @relation("FollowUpActor")
   followUpsReceived       FollowUpRecord[] @relation("FollowUpSubject")
 
+  // M13 Dashboard Multi-Role back-relations
+  alertsTargeted        RedFlagAlert[] @relation("AlertTarget")
+  alertsAcknowledged    RedFlagAlert[] @relation("AlertAck")
+  alertsDismissed       RedFlagAlert[] @relation("AlertDismiss")
+
+  // M14 Triwulan Review back-relations
+  triwulanReviewsGenerated    TriwulanReview[]         @relation("TRGeneratedBy")
+  triwulanReviewsSubmitted    TriwulanReview[]         @relation("TRSubmittedBy")
+  triwulanReviewsPembinaSigned TriwulanReview[]        @relation("TRPembinaSignedBy")
+  triwulanReviewsBLMAcked     TriwulanReview[]         @relation("TRBLMAckBy")
+  triwulanSignatureEvents     TriwulanSignatureEvent[] @relation("TRSignatureEventActor")
+  auditSubstansiAssessments   AuditSubstansiResult[]   @relation("TRAssessedBy")
+
   @@unique([organizationId, nrp])
   @@index([organizationId, role])
   @@index([organizationId, currentCohortId])

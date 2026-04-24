@@ -31,6 +31,7 @@ import { seedM09NotificationRules } from './seed/m09-notification-rules';
 import { seedEventExecutionSampleData } from './seed/event-execution-sample';
 import { seedM10SafeguardData, seedM10SampleData } from './seed/m10-safeguard';
 import { seedMHNotificationTemplates } from './seed/mh-notification-templates';
+import { seedM14NotificationTemplates } from './seed/m14-notification-templates';
 
 const log = createLogger('seed');
 const prisma = new PrismaClient();
@@ -408,6 +409,12 @@ async function main() {
   // ========================================
   log.info('Starting M11 mental health notification templates seed');
   await seedMHNotificationTemplates(prisma, superAdmin.id);
+
+  // ========================================
+  // 15. M14: Triwulan Review notification templates
+  // ========================================
+  log.info('Starting M14 triwulan notification templates seed');
+  await seedM14NotificationTemplates(prisma, superAdmin.id);
 
   // ========================================
   // Summary

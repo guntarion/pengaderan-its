@@ -1,0 +1,133 @@
+// prisma/schema/nawasena_dashboard.prisma
+// Domain: Dashboard Multi-Role (NAWASENA M13)
+// Note: flat naming — no subdirectory support in Prisma multi-file schema
+
+// ============================================
+// ENUMS — Dashboard M13
+// ============================================
+
+enum KPIPeriod {
+  REALTIME
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  END_OF_COHORT
+}
+
+enum KPISignalSource {
+  AUTO
+  MANUAL
+  EXTERNAL
+}
+
+enum RedFlagType {
+  PULSE_LOW_3D
+  JOURNAL_DORMANT_14D
+  KP_DEBRIEF_OVERDUE_14D
+  PAKTA_UNSIGNED_7D
+  INCIDENT_CREATED_UNASSIGNED
+  ANON_REPORT_RED_NEW
+  MOOD_COHORT_DROP
+  NPS_DROP
+  LOGBOOK_MISSING_WEEK
+  COMPLIANCE_GAP
+  CUSTOM
+}
+
+enum RedFlagSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  DISMISSED
+  RESOLVED
+  SNOOZED
+}
+
+// ============================================
+// MODEL: KPISignal — materialized KPI values per cohort per period
+// ============================================
+
+model KPISignal {
+  id             String          @id @default(cuid())
+  organizationId String
+  cohortId       String
+  kpiDefId       String          // FK → KPIDef (M02)
+  value          Float           // numeric value (rate, count, avg)
+  valueText      String?         // optional text for non-numeric KPI
+  metadata       Json?           // supplementary data (breakdown, trend)
+  source         KPISignalSource @default(AUTO)
+  period         KPIPeriod
+  computedAt     DateTime        @default(now())
+  computedBy     String?         // userId for MANUAL source; null = cron
+
+  // Relations
+  organization   Organization @relation("KPISignalOrg", fields: [organizationId], references: [id])
+  cohort         Cohort       @relation("KPISignalCohort", fields: [cohortId], references: [id])
+  kpiDef         KPIDef       @relation(fields: [kpiDefId], references: [id])
+
+  // Hot read index: "show latest KPI X for cohort C"
+  @@index([cohortId, kpiDefId, period, computedAt(sort: Desc)], name: "kpi_signal_hot_read")
+  // Audit + retention cleanup
+  @@index([organizationId, computedAt], name: "kpi_signal_org_cleanup")
+
+  @@map("kpi_signals")
+}
+
+// ============================================
+// MODEL: RedFlagAlert — materialized red flags with lifecycle
+// ============================================
+
+model RedFlagAlert {
+  id             String          @id @default(cuid())
+  organizationId String
+  cohortId       String
+  type           RedFlagType
+  severity       RedFlagSeverity
+  status         AlertStatus     @default(ACTIVE)
+
+  // Target (nullable = cohort-level alert)
+  targetUserId   String?
+  targetRoles    UserRole[]      // which dashboard roles see this alert
+  targetUrl      String          // pre-computed drill-down URL
+
+  // Display
+  title          String          // shown in alert panel
+  description    String?         // optional expanded text
+
+  // Rule-specific data
+  metadata       Json?           // consecutive days, score, etc.
+
+  // Lifecycle timestamps
+  computedAt      DateTime        @default(now())
+  firstSeenAt     DateTime        @default(now())  // immutable: first rule fire
+  acknowledgedById String?
+  acknowledgedAt   DateTime?
+  dismissedById    String?
+  dismissedAt      DateTime?
+  dismissReason    String?
+  resolvedAt       DateTime?
+  snoozeUntil      DateTime?
+
+  // Relations
+  organization   Organization @relation("RedFlagAlertOrg", fields: [organizationId], references: [id])
+  cohort         Cohort       @relation("RedFlagAlertCohort", fields: [cohortId], references: [id])
+  targetUser     User?        @relation("AlertTarget", fields: [targetUserId], references: [id])
+  acknowledgedBy User?        @relation("AlertAck", fields: [acknowledgedById], references: [id])
+  dismissedBy    User?        @relation("AlertDismiss", fields: [dismissedById], references: [id])
+
+  // Hot read: active alerts for SC dashboard
+  @@index([cohortId, status, severity, computedAt(sort: Desc)], name: "alert_hot_read")
+  // User-targeted alerts (Kasuh → adik)
+  @@index([targetUserId, status], name: "alert_target_user")
+  // Retention cleanup
+  @@index([organizationId, computedAt], name: "alert_org_cleanup")
+
+  @@map("red_flag_alerts")
+}

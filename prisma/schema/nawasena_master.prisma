@@ -212,7 +212,10 @@ model KPIDef {
   outcomeField   String?
 
   // Relations
-  kegiatan       Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+  kegiatan       Kegiatan    @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+
+  // M13 Dashboard back-relations
+  kpiSignals     KPISignal[]
 
   @@index([kegiatanId])
   @@map("kpi_defs")

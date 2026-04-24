@@ -2,7 +2,10 @@
 
 /**
  * src/app/(DashboardLayout)/dashboard/kasuh/page.tsx
- * NAWASENA M09 — Kasuh dashboard: adik asuh list with pulse trend + cycle status.
+ * NAWASENA M09 + M13 — Kasuh dashboard.
+ *
+ * M13 section at top: adik asuh pulse trend 7d, upcoming logbook deadline.
+ * M09 section below: adik asuh list with cycle status (existing functionality).
  */
 
 import { useEffect, useState } from 'react';
@@ -12,7 +15,8 @@ import { SkeletonCard } from '@/components/shared/skeletons';
 import { CycleStatusBadge, type CycleStatus } from '@/components/m09/CycleStatusBadge';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';
-import { Heart, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import type { KasuhDashboardPayload } from '@/types/dashboard';
+import { Heart, ChevronRight, TrendingUp, TrendingDown, Minus, Calendar } from 'lucide-react';
 
 const log = createLogger('kasuh-dashboard-page');
 
@@ -82,18 +86,28 @@ function MiniTrend({ trend }: { trend: PulseTrendData | null }) {
 export default function KasuhDashboardPage() {
   const [adikList, setAdikList] = useState<AdikAsuhItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [m13Payload, setM13Payload] = useState<KasuhDashboardPayload | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
         log.info('Fetching Kasuh dashboard data');
-        const res = await fetch('/api/kasuh/adik-asuh/list');
-        if (!res.ok) {
-          toast.apiError(await res.json());
+        // M09 data + M13 payload in parallel
+        const [m09Res, m13Res] = await Promise.all([
+          fetch('/api/kasuh/adik-asuh/list'),
+          fetch('/api/dashboard/kasuh'),
+        ]);
+        if (!m09Res.ok) {
+          toast.apiError(await m09Res.json());
           return;
         }
-        const json = await res.json();
-        setAdikList(json.data ?? []);
+        const m09Json = await m09Res.json();
+        setAdikList(m09Json.data ?? []);
+
+        if (m13Res.ok) {
+          const m13Json = await m13Res.json();
+          setM13Payload(m13Json.data ?? null);
+        }
       } catch (err) {
         log.error('Failed to fetch Kasuh dashboard', { err });
         toast.error('Gagal memuat data adik asuh');
@@ -140,6 +154,26 @@ export default function KasuhDashboardPage() {
       </div>
 
       <div className="container mx-auto max-w-3xl px-4 py-6 space-y-4">
+        {/* M13 — Upcoming logbook deadline banner */}
+        {m13Payload?.upcomingLogbookDeadline && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 rounded-2xl p-4 flex items-center gap-3">
+            <Calendar className="h-5 w-5 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                Deadline Logbook Mendatang
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-500">
+                {new Date(m13Payload.upcomingLogbookDeadline).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </div>
+          </div>
+        )}
+
         {adikList.length === 0 ? (
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-sky-100 dark:border-sky-900 p-12 text-center shadow-sm">
             <Heart className="h-12 w-12 mx-auto text-gray-300 mb-3" />

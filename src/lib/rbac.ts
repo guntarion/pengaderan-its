@@ -80,10 +80,19 @@ export const ROUTE_RBAC_MAP: Record<string, UserRole[]> = {
   '/dashboard/pulse': ALL_ROLES,
 
   // ---- Dashboard Struktur — KP ----
-  '/dashboard/kp': [UserRole.KP],
+  '/dashboard/kp': [UserRole.KP, UserRole.SUPERADMIN],
 
   // ---- Dashboard Struktur — KASUH ----
-  '/dashboard/kasuh': [UserRole.KASUH],
+  '/dashboard/kasuh': [UserRole.KASUH, UserRole.SUPERADMIN],
+
+  // ---- M13 Role-specific dashboards ----
+  '/dashboard/maba': [UserRole.MABA, UserRole.SUPERADMIN],
+  '/dashboard/oc': [UserRole.OC, UserRole.SUPERADMIN],
+  '/dashboard/sc': [UserRole.SC, UserRole.SUPERADMIN],
+  '/dashboard/blm': [UserRole.BLM, UserRole.SUPERADMIN],
+  '/dashboard/pembina': [UserRole.PEMBINA, UserRole.SUPERADMIN],
+  '/dashboard/satgas': [UserRole.SATGAS, UserRole.SUPERADMIN],
+  '/dashboard/unauthorized': ALL_ROLES,
 
   // ---- M06/M08 OC Kegiatan routes ----
   '/dashboard/oc/kegiatan': [UserRole.OC, UserRole.SC, UserRole.SUPERADMIN],
