@@ -66,6 +66,74 @@ export interface SanitizedUser {
   } | null;
 }
 
+// =======================================================================
+// M03 Purpose-based sanitization
+// Purpose controls exactly which fields are exposed for pairing views.
+// =======================================================================
+
+export type M03SanitizePurpose = 'buddy_view' | 'kp_group_view' | 'kasuh_adik_view';
+
+/**
+ * Field-level access matrix for M03 pairing views.
+ *
+ * | Field              | buddy_view | kp_group_view | kasuh_adik_view |
+ * |--------------------|-----------|---------------|-----------------|
+ * | id, fullName, displayName, nrp, role | yes | yes | yes |
+ * | province           | yes        | yes           | yes             |
+ * | interests          | yes        | no            | yes             |
+ * | shareContact, phone | no        | no            | yes (if shared) |
+ * | isRantau           | no         | no            | yes             |
+ * | isKIP              | no         | no            | yes             |
+ * | hasDisability      | no         | no            | no              |
+ * | emergencyContact   | no         | no            | no              |
+ */
+export interface M03SanitizedUser {
+  id: string;
+  fullName: string;
+  displayName?: string | null;
+  nrp?: string | null;
+  role: string;
+  province?: string | null;
+  interests?: string[] | null;
+  phone?: string | null;
+  isRantau?: boolean | null;
+  isKIP?: boolean | null;
+}
+
+export function sanitizeUserForM03(
+  user: RawUser & { interests?: unknown; shareContact?: boolean; phone?: string | null },
+  purpose: M03SanitizePurpose
+): M03SanitizedUser {
+  const base: M03SanitizedUser = {
+    id: user.id,
+    fullName: user.fullName,
+    displayName: user.displayName,
+    nrp: user.nrp,
+    role: user.role,
+    province: user.province,
+  };
+
+  if (purpose === 'buddy_view') {
+    base.interests = Array.isArray(user.interests) ? (user.interests as string[]) : [];
+  }
+
+  if (purpose === 'kp_group_view') {
+    // No interests, no contact — just basic fields + province
+  }
+
+  if (purpose === 'kasuh_adik_view') {
+    base.interests = Array.isArray(user.interests) ? (user.interests as string[]) : [];
+    base.isRantau = user.isRantau;
+    base.isKIP = user.isKIP;
+    // Only expose contact if MABA opted in
+    if (user.shareContact && user.phone) {
+      base.phone = user.phone;
+    }
+  }
+
+  return base;
+}
+
 /**
  * Sanitize user record based on viewer's role.
  * Pass `auditContext` to log emergency contact access.

@@ -1,0 +1,275 @@
+// prisma/schema/nawasena_struktur.prisma
+// Domain: Struktur Angkatan — KP Group, Buddy Pair, Kasuh Pair, Pairing Request (NAWASENA M03)
+// 7 models: KPGroup, KPGroupMember, BuddyPair, BuddyPairMember, KasuhPair, PairingRequest, BulkPairingBatch
+// 4 enums: PairStatus, KPGroupStatus, PairingRequestType, PairingRequestStatus
+// RLS: applied via raw SQL in migration (org isolation pattern from M01)
+// Partial unique indexes: applied via raw SQL in migration
+
+// ============================================
+// ENUMS — Struktur
+// ============================================
+
+enum PairStatus {
+  ACTIVE      // pair sedang aktif
+  ARCHIVED    // cohort selesai atau member keluar
+  REASSIGNED  // member pindah ke pair lain (history preserved)
+}
+
+enum KPGroupStatus {
+  DRAFT    // SC buat tapi belum assign member
+  ACTIVE   // cohort berjalan
+  ARCHIVED // cohort selesai atau grup dibubarkan
+}
+
+enum PairingRequestType {
+  RE_PAIR_KASUH       // maba ajukan pergantian Kasuh
+  KASUH_UNREACHABLE   // maba lapor Kasuh tidak bisa dihubungi (eskalasi)
+  KP_GROUP_TRANSFER   // SC-initiated transfer maba antar KP Group
+  BUDDY_REASSIGN      // SC-initiated reassign Buddy (jarang)
+}
+
+enum PairingRequestStatus {
+  PENDING   // maba submit, menunggu SC review
+  APPROVED  // SC setuju, menunggu fulfilment
+  REJECTED  // SC tolak dengan alasan
+  FULFILLED // assignment baru sudah dibuat
+  CANCELLED // maba cancel sendiri sebelum SC review
+}
+
+// ============================================
+// MODEL: KPGroup — Kelompok Pendampingan
+// ============================================
+
+model KPGroup {
+  id                   String       @id @default(cuid())
+  organizationId       String
+  cohortId             String
+  code                 String       // contoh "KP-A", "KP-B"
+  name                 String       // contoh "KP-A Pemberani"
+  kpCoordinatorUserId  String       // User dengan role=KP
+  assistantUserIds     String[]     // array of UUID, max 2
+  capacityTarget       Int          @default(12) // range 10-15
+  capacityMax          Int          @default(15) // override sampai 18 dengan reason
+  status               KPGroupStatus @default(DRAFT)
+  createdBy            String       // SC yang create
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  archivedAt           DateTime?
+
+  // Relations
+  organization  Organization  @relation(fields: [organizationId], references: [id])
+  cohort        Cohort        @relation(fields: [cohortId], references: [id])
+  coordinator   User          @relation("KPGroupCoordinator", fields: [kpCoordinatorUserId], references: [id])
+  creator       User          @relation("KPGroupCreator", fields: [createdBy], references: [id])
+  members       KPGroupMember[]
+
+  @@unique([cohortId, code])
+  @@unique([cohortId, kpCoordinatorUserId])
+  @@index([organizationId, cohortId, status])
+  @@index([cohortId, status])
+  @@map("kp_groups")
+}
+
+// ============================================
+// MODEL: KPGroupMember — Anggota KP Group
+// ============================================
+
+model KPGroupMember {
+  id             String    @id @default(cuid())
+  organizationId String    // denormalized untuk RLS efisien
+  cohortId       String    // denormalized
+  kpGroupId      String
+  userId         String    // role=MABA atau ASSISTANT
+  memberType     String    @default("MABA") // "MABA" | "ASSISTANT"
+  joinedAt       DateTime  @default(now())
+  leftAt         DateTime?
+  leftReason     String?
+  status         PairStatus @default(ACTIVE)
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  cohort         Cohort       @relation(fields: [cohortId], references: [id])
+  kpGroup        KPGroup      @relation(fields: [kpGroupId], references: [id])
+  user           User         @relation("KPGroupMemberUser", fields: [userId], references: [id])
+
+  // Partial unique enforced via raw SQL: CREATE UNIQUE INDEX kpgroup_member_active_unique
+  //   ON "KPGroupMember" (cohort_id, user_id) WHERE status = 'ACTIVE'
+  @@index([kpGroupId, status])
+  @@index([organizationId, cohortId])
+  @@index([userId, status])
+  @@map("kp_group_members")
+}
+
+// ============================================
+// MODEL: BuddyPair — Pasangan Buddy
+// ============================================
+
+model BuddyPair {
+  id                  String    @id @default(cuid())
+  organizationId      String
+  cohortId            String
+  reasonForPairing    String    // dari algoritma: "lokal-rantau mix", "intra-lokal fallback", dll
+  isCrossDemographic  Boolean   // rantau vs lokal
+  algorithmVersion    String    // contoh "v1.0-greedy-swap"
+  algorithmSeed       String    // seed untuk reproducibility
+  generationBatchId   String?   // FK ke BulkPairingBatch (nullable untuk manual)
+  isTriple            Boolean   @default(false) // edge case jumlah ganjil
+  status              PairStatus @default(ACTIVE)
+  createdBy           String    // OC/SC yang commit
+  createdAt           DateTime  @default(now())
+  archivedAt          DateTime?
+
+  // Relations
+  organization  Organization     @relation(fields: [organizationId], references: [id])
+  cohort        Cohort           @relation(fields: [cohortId], references: [id])
+  creator       User             @relation("BuddyPairCreator", fields: [createdBy], references: [id])
+  members       BuddyPairMember[]
+  batch         BulkPairingBatch? @relation(fields: [generationBatchId], references: [id])
+
+  @@index([cohortId, status])
+  @@index([organizationId, cohortId])
+  @@index([generationBatchId])
+  @@map("buddy_pairs")
+}
+
+// ============================================
+// MODEL: BuddyPairMember — Anggota Buddy Pair
+// ============================================
+
+model BuddyPairMember {
+  id             String    @id @default(cuid())
+  organizationId String    // denormalized
+  cohortId       String    // denormalized
+  buddyPairId    String
+  userId         String    // role=MABA
+  joinedAt       DateTime  @default(now())
+  leftAt         DateTime?
+  status         PairStatus @default(ACTIVE)
+
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  cohort        Cohort       @relation(fields: [cohortId], references: [id])
+  buddyPair   BuddyPair    @relation(fields: [buddyPairId], references: [id])
+  user        User         @relation("BuddyPairMemberUser", fields: [userId], references: [id])
+
+  // Partial unique enforced via raw SQL: CREATE UNIQUE INDEX buddy_pair_member_active_unique
+  //   ON "BuddyPairMember" (cohort_id, user_id) WHERE status = 'ACTIVE'
+  @@index([buddyPairId, status])
+  @@index([cohortId, userId])
+  @@map("buddy_pair_members")
+}
+
+// ============================================
+// MODEL: KasuhPair — Pasangan Kasuh-Maba
+// ============================================
+
+model KasuhPair {
+  id                      String    @id @default(cuid())
+  organizationId          String
+  cohortId                String
+  mabaUserId              String    // role=MABA
+  kasuhUserId             String    // role=KASUH
+  matchScore              Float     // skor Jaccard yang di-commit, 0.0-1.0
+  matchReasons            String[]  // alasan match
+  algorithmVersion        String
+  status                  PairStatus @default(ACTIVE)
+  previousPairId          String?   // self-relation: link ke KasuhPair sebelumnya
+  reassignedFromRequestId String?   // FK ke PairingRequest yang memicu re-pair
+  createdBy               String    // SC yang commit
+  createdAt               DateTime  @default(now())
+  archivedAt              DateTime?
+  endReason               String?   // "re-pair request", "cohort end"
+
+  // Relations
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  cohort         Cohort         @relation(fields: [cohortId], references: [id])
+  maba           User           @relation("KasuhPairMaba", fields: [mabaUserId], references: [id])
+  kasuh          User           @relation("KasuhPairKasuh", fields: [kasuhUserId], references: [id])
+  creator        User           @relation("KasuhPairCreator", fields: [createdBy], references: [id])
+  previousPair   KasuhPair?     @relation("KasuhPairSuperseded", fields: [previousPairId], references: [id])
+  nextPairs      KasuhPair[]    @relation("KasuhPairSuperseded")
+  fromRequest    PairingRequest? @relation("KasuhPairFromRequest", fields: [reassignedFromRequestId], references: [id])
+  // Pairing requests where this pair was the current pair being replaced
+  pairingRequestsCurrent   PairingRequest[] @relation("PairingRequestCurrentKasuh")
+  // Pairing requests that this pair fulfilled
+  pairingRequestsFulfilled PairingRequest[] @relation("PairingRequestFulfilledKasuh")
+
+  // Partial unique enforced via raw SQL: CREATE UNIQUE INDEX kasuh_pair_active_per_maba
+  //   ON "KasuhPair" (cohort_id, maba_user_id) WHERE status = 'ACTIVE'
+  @@index([cohortId, status])
+  @@index([mabaUserId, status])
+  @@index([kasuhUserId, status])
+  @@index([organizationId, cohortId])
+  @@map("kasuh_pairs")
+}
+
+// ============================================
+// MODEL: PairingRequest — Re-pair Consent Flow
+// ============================================
+
+model PairingRequest {
+  id                       String               @id @default(cuid())
+  organizationId           String
+  cohortId                 String
+  requesterUserId          String               // maba yang submit, atau SC untuk transfer
+  subjectUserId            String?              // user yang di-pair ulang (biasanya maba)
+  type                     PairingRequestType
+  status                   PairingRequestStatus @default(PENDING)
+  // Separate nullable FKs per pair type (avoid polymorphic)
+  currentKasuhPairId       String?
+  currentKPGroupMemberId   String?
+  currentBuddyPairMemberId String?
+  optionalNote             String?              @db.Text
+  preferenceHint           Json?                // { "avoidHobby": [], "preferProvince": null }
+  resolvedByUserId         String?
+  resolvedAt               DateTime?
+  resolutionNote           String?              @db.Text // wajib untuk REJECTED
+  fulfilledKasuhPairId     String?              // pair baru setelah fulfilled
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+
+  // Relations
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  cohort             Cohort       @relation(fields: [cohortId], references: [id])
+  requester          User         @relation("PairingRequestRequester", fields: [requesterUserId], references: [id])
+  subject            User?        @relation("PairingRequestSubject", fields: [subjectUserId], references: [id])
+  resolver           User?        @relation("PairingRequestResolver", fields: [resolvedByUserId], references: [id])
+  currentKasuhPair   KasuhPair?   @relation("PairingRequestCurrentKasuh", fields: [currentKasuhPairId], references: [id])
+  fulfilledKasuhPair KasuhPair?   @relation("PairingRequestFulfilledKasuh", fields: [fulfilledKasuhPairId], references: [id])
+  // Back-relations from KasuhPair.fromRequest
+  resultingKasuhPairs KasuhPair[] @relation("KasuhPairFromRequest")
+
+  @@index([organizationId, cohortId, status])
+  @@index([requesterUserId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([type, status])
+  @@map("pairing_requests")
+}
+
+// ============================================
+// MODEL: BulkPairingBatch — Metadata Bulk Generation
+// ============================================
+
+model BulkPairingBatch {
+  id               String   @id @default(cuid())
+  organizationId   String
+  cohortId         String
+  batchType        String   // "BUDDY_GENERATE" | "KASUH_SUGGEST" | "KP_GROUP_ASSIGN"
+  algorithmVersion String
+  seed             String
+  inputHash        String   // SHA-256 dari sorted input userIds
+  summary          Json     // { totalPairs, crossDemographicRatio, unpaired: [] }
+  committedBy      String
+  committedAt      DateTime @default(now())
+  previewTokenHash String?  // HMAC preview token untuk verify origin
+
+  // Relations
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  cohort        Cohort       @relation(fields: [cohortId], references: [id])
+  committer     User         @relation("BulkPairingBatchCommitter", fields: [committedBy], references: [id])
+  buddyPairs    BuddyPair[]
+
+  @@index([cohortId, batchType, committedAt])
+  @@index([organizationId, cohortId])
+  @@map("bulk_pairing_batches")
+}

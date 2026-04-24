@@ -65,6 +65,14 @@ const SidebarContent: MenuItem[] = [
         isPro: false,
         roles: ALL_NAWASENA,
       },
+      {
+        name: 'Preferensi Notifikasi',
+        icon: 'solar:bell-linear',
+        id: uniqueId(),
+        url: '/settings/notifications',
+        isPro: false,
+        roles: ALL_NAWASENA,
+      },
     ],
   },
 
@@ -256,6 +264,36 @@ const SidebarContent: MenuItem[] = [
         ],
       },
       {
+        name: 'Notifikasi',
+        icon: 'solar:bell-bing-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ADMIN_ROLES,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Aturan Notifikasi',
+            url: '/admin/notifications/rules',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+          {
+            id: uniqueId(),
+            name: 'Template',
+            url: '/admin/notifications/templates',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+          {
+            id: uniqueId(),
+            name: 'Log Pengiriman',
+            url: '/admin/notifications/logs',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+        ],
+      },
+      {
         name: 'Audit Log',
         icon: 'solar:clipboard-list-linear',
         id: uniqueId(),
@@ -297,6 +335,97 @@ const SidebarContent: MenuItem[] = [
             url: '/admin/master/seed',
             isPro: false,
             roles: SUPERADMIN_ONLY,
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* RELASI & PENDAMPINGAN — Dashboard per peran (MABA, KP, KASUH)     */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Relasi & Pendampingan',
+    roles: ['MABA', 'KP', 'KASUH'],
+    children: [
+      {
+        name: 'Relasi Saya',
+        icon: 'solar:heart-angle-linear',
+        id: uniqueId(),
+        url: '/dashboard/relasi',
+        isPro: false,
+        roles: ['MABA'],
+      },
+      {
+        name: 'Ajukan Pergantian Kasuh',
+        icon: 'solar:clipboard-list-linear',
+        id: uniqueId(),
+        url: '/dashboard/kakak-c/request',
+        isPro: false,
+        roles: ['MABA'],
+      },
+      {
+        name: 'Grup Saya',
+        icon: 'solar:users-group-rounded-linear',
+        id: uniqueId(),
+        url: '/dashboard/kp/group',
+        isPro: false,
+        roles: ['KP'],
+      },
+      {
+        name: 'Adik Asuh',
+        icon: 'solar:heart-angle-linear',
+        id: uniqueId(),
+        url: '/dashboard/kasuh/adik-asuh',
+        isPro: false,
+        roles: ['KASUH'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* STRUKTUR ANGKATAN — KP Group, Buddy, Kasuh, Pairing (SC/OC)       */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Struktur Angkatan',
+    roles: ['SC', 'OC', 'SUPERADMIN'],
+    children: [
+      {
+        name: 'Struktur',
+        icon: 'solar:network-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ['SC', 'OC', 'SUPERADMIN'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'KP Group',
+            url: '/admin/struktur/kp-group',
+            isPro: false,
+            roles: ['SC', 'OC', 'SUPERADMIN'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Buddy Pairing',
+            url: '/admin/struktur/buddy-pairing',
+            isPro: false,
+            roles: ['SC', 'OC', 'SUPERADMIN'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Kasuh Pairing',
+            url: '/admin/struktur/kasuh-pairing',
+            isPro: false,
+            roles: ['SC', 'SUPERADMIN'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Pairing Requests',
+            url: '/admin/struktur/pairing-requests',
+            isPro: false,
+            roles: ['SC', 'SUPERADMIN'],
           },
         ],
       },

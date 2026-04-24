@@ -64,6 +64,19 @@ export const ROUTE_RBAC_MAP: Record<string, UserRole[]> = {
   // ---- Master data admin — SC + SUPERADMIN ----
   '/admin/master': [UserRole.SC, UserRole.SUPERADMIN],
 
+  // ---- Struktur Angkatan — Admin routes (SC, OC, SUPERADMIN) ----
+  '/admin/struktur': [UserRole.SC, UserRole.OC, UserRole.SUPERADMIN],
+
+  // ---- Dashboard Struktur — MABA ----
+  '/dashboard/relasi': [UserRole.MABA],
+  '/dashboard/kakak-c': [UserRole.MABA],
+
+  // ---- Dashboard Struktur — KP ----
+  '/dashboard/kp': [UserRole.KP],
+
+  // ---- Dashboard Struktur — KASUH ----
+  '/dashboard/kasuh': [UserRole.KASUH],
+
   // ---- Dashboard (all authenticated) ----
   '/dashboard': ALL_ROLES,
 

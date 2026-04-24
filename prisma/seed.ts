@@ -16,8 +16,11 @@
  *   TENANT_ORG_CODE        — default org code (default: HMTC)
  */
 
-import { PrismaClient, PaktaType, PaktaVersionStatus, OrganizationStatus, CohortStatus, UserRole, UserStatus } from '@prisma/client';
+import { PrismaClient, PaktaType, PaktaVersionStatus, OrganizationStatus, CohortStatus, UserRole, UserStatus, KPGroupStatus, PairStatus, PairingRequestStatus, PairingRequestType } from '@prisma/client';
 import { createLogger } from '../src/lib/logger';
+import { seedNotificationTemplates } from './seed/notifications-templates';
+import { seedNotificationRules } from './seed/notifications-rules';
+import { seedNotificationPreferences } from './seed/notifications-preferences';
 
 const log = createLogger('seed');
 const prisma = new PrismaClient();
@@ -221,6 +224,101 @@ async function main() {
     } else {
       log.info('PaktaVersion already exists, skipping', { type: paktaType, id: existing.id });
     }
+  }
+
+  // ========================================
+  // 5. M15: Notification Templates + Rules + Preferences
+  // ========================================
+  log.info('Starting M15 notifications seed');
+
+  await seedNotificationTemplates(prisma, superAdmin.id);
+  await seedNotificationRules(prisma, superAdmin.id);
+  await seedNotificationPreferences(prisma);
+
+  // ========================================
+  // 6. M03: Dev fixture (gate: SEED_DEV_STRUKTUR=true)
+  // ========================================
+  if (process.env.NODE_ENV === 'development' && process.env.SEED_DEV_STRUKTUR === 'true') {
+    const seedLog = createLogger('seed:struktur');
+    seedLog.info('Starting M03 dev fixture seed');
+
+    // Find or use superAdmin as KP coordinator placeholder
+    const devKP = await prisma.user.findFirst({
+      where: { organizationId: org.id, role: UserRole.KP },
+    });
+
+    const coordinatorId = devKP?.id ?? superAdmin.id;
+
+    // Upsert KPGroup KP-A
+    const existingKPGroup = await prisma.kPGroup.findFirst({
+      where: { cohortId: cohort.id, code: 'KP-A' },
+    });
+
+    const kpGroup = existingKPGroup ?? await prisma.kPGroup.create({
+      data: {
+        organizationId: org.id,
+        cohortId: cohort.id,
+        code: 'KP-A',
+        name: 'KP-A Dev Group',
+        kpCoordinatorUserId: coordinatorId,
+        assistantUserIds: [],
+        capacityTarget: 12,
+        capacityMax: 15,
+        status: KPGroupStatus.DRAFT,
+        createdBy: superAdmin.id,
+      },
+    });
+
+    seedLog.info('KPGroup dev fixture ready', { id: kpGroup.id, code: kpGroup.code });
+
+    // Seed 1 BuddyPair dev fixture (without members to keep simple)
+    const existingBuddyPair = await prisma.buddyPair.findFirst({
+      where: { cohortId: cohort.id, algorithmSeed: 'dev-seed-001' },
+    });
+
+    const buddyPair = existingBuddyPair ?? await prisma.buddyPair.create({
+      data: {
+        organizationId: org.id,
+        cohortId: cohort.id,
+        reasonForPairing: 'dev-fixture placeholder',
+        isCrossDemographic: true,
+        algorithmVersion: 'v1.0-greedy-swap',
+        algorithmSeed: 'dev-seed-001',
+        isTriple: false,
+        status: PairStatus.ACTIVE,
+        createdBy: superAdmin.id,
+      },
+    });
+
+    seedLog.info('BuddyPair dev fixture ready', { id: buddyPair.id });
+
+    // Seed 1 PairingRequest PENDING (with superAdmin as requester — dev placeholder)
+    const existingRequest = await prisma.pairingRequest.findFirst({
+      where: {
+        cohortId: cohort.id,
+        requesterUserId: superAdmin.id,
+        type: PairingRequestType.RE_PAIR_KASUH,
+        status: PairingRequestStatus.PENDING,
+      },
+    });
+
+    if (!existingRequest) {
+      await prisma.pairingRequest.create({
+        data: {
+          organizationId: org.id,
+          cohortId: cohort.id,
+          requesterUserId: superAdmin.id,
+          type: PairingRequestType.RE_PAIR_KASUH,
+          status: PairingRequestStatus.PENDING,
+          optionalNote: 'Dev fixture — request for testing SC queue UI',
+        },
+      });
+      seedLog.info('PairingRequest dev fixture created');
+    } else {
+      seedLog.info('PairingRequest dev fixture already exists, skipping');
+    }
+
+    seedLog.info('M03 dev fixture seed completed');
   }
 
   // ========================================

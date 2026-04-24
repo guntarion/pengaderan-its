@@ -48,6 +48,23 @@ model Organization {
   whitelistEmails WhitelistEmail[]
   kegiatan        Kegiatan[]
 
+  // M15 Notification relations
+  notificationRules        NotificationRule[]
+  notificationLogs         NotificationLog[]
+  notificationTemplates    NotificationTemplate[]
+  notificationSubscriptions NotificationSubscription[]
+  notificationPreferences  NotificationPreference[]
+  notificationRuleExecutions NotificationRuleExecution[]
+
+  // M03 Struktur Angkatan relations
+  kpGroups         KPGroup[]
+  kpGroupMembers   KPGroupMember[]
+  buddyPairs       BuddyPair[]
+  buddyPairMembers BuddyPairMember[]
+  kasuhPairs       KasuhPair[]
+  pairingRequests  PairingRequest[]
+  bulkPairingBatches BulkPairingBatch[]
+
   @@index([status])
   @@map("organizations")
 }
@@ -76,6 +93,15 @@ model Cohort {
   users           User[]           @relation("UserCurrentCohort")
   paktaSignatures PaktaSignature[]
   whitelistEmails WhitelistEmail[] @relation("CohortWhitelist")
+
+  // M03 Struktur Angkatan relations
+  kpGroups          KPGroup[]
+  kpGroupMembers    KPGroupMember[]
+  buddyPairs        BuddyPair[]
+  buddyPairMembers  BuddyPairMember[]
+  kasuhPairs        KasuhPair[]
+  pairingRequests   PairingRequest[]
+  bulkPairingBatches BulkPairingBatch[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])

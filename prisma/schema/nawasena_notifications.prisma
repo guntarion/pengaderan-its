@@ -1,0 +1,277 @@
+// prisma/schema/nawasena_notifications.prisma
+// Domain: Notifications & Reminders Infrastructure (NAWASENA M15)
+// Models: NotificationTemplate, NotificationTemplateVersion, NotificationRule,
+//         NotificationRuleExecution, NotificationLog, NotificationSubscription,
+//         NotificationPreference
+// Note: All files must be directly in prisma/schema/ — no subdirectory support.
+
+// ============================================
+// ENUMS — Notification Types
+// ============================================
+
+enum ChannelType {
+  PUSH
+  EMAIL
+  WHATSAPP
+  IN_APP
+}
+
+enum NotificationCategory {
+  CRITICAL
+  FORM_REMINDER
+  NORMAL
+  OPS
+}
+
+enum LogStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+  COMPLAINED
+  SKIPPED_USER_OPTOUT
+  SKIPPED_NO_SUBSCRIPTION
+  SKIPPED_BOUNCE_COOLDOWN
+  ESCALATED_INSTEAD_OF_SEND
+}
+
+enum TemplateFormat {
+  PLAIN
+  MARKDOWN
+  REACT_EMAIL
+}
+
+enum RuleExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+// ============================================
+// MODEL: NotificationTemplate (parent, versioned)
+// ============================================
+
+model NotificationTemplate {
+  id                String                       @id @default(cuid())
+  templateKey       String
+  description       String
+  category          NotificationCategory
+  organizationId    String?
+  activeVersionId   String?
+  supportedChannels ChannelType[]
+  payloadSchema     Json
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+
+  // Relations
+  organization  Organization?                    @relation(fields: [organizationId], references: [id])
+  versions      NotificationTemplateVersion[]    @relation("TemplateVersions")
+  activeVersion NotificationTemplateVersion?     @relation("ActiveVersion", fields: [activeVersionId], references: [id])
+
+  @@unique([organizationId, templateKey])
+  @@index([templateKey])
+  @@index([organizationId])
+  @@map("notification_templates")
+}
+
+// ============================================
+// MODEL: NotificationTemplateVersion (child, immutable content)
+// ============================================
+
+model NotificationTemplateVersion {
+  id          String         @id @default(cuid())
+  templateId  String
+  version     String
+  format      TemplateFormat
+  content     Json
+  createdById String
+  createdAt   DateTime       @default(now())
+  publishedAt DateTime?
+
+  // Relations
+  template           NotificationTemplate   @relation("TemplateVersions", fields: [templateId], references: [id])
+  createdBy          User                   @relation("NotificationVersionCreator", fields: [createdById], references: [id])
+
+  // Back-relations for activeVersion
+  activeForTemplates NotificationTemplate[] @relation("ActiveVersion")
+
+  // Notification logs using this version
+  notificationLogs   NotificationLog[]
+
+  @@unique([templateId, version])
+  @@index([templateId])
+  @@map("notification_template_versions")
+}
+
+// ============================================
+// MODEL: NotificationRule
+// ============================================
+
+model NotificationRule {
+  id                  String               @id @default(cuid())
+  organizationId      String?
+  isGlobal            Boolean              @default(false)
+  name                String
+  description         String?
+  templateKey         String
+  cronExpression      String
+  timezone            String               @default("Asia/Jakarta")
+  category            NotificationCategory
+  channels            ChannelType[]
+  audienceResolverKey String
+  audienceParams      Json?
+  maxRemindersPerWeek Int                  @default(3)
+  active              Boolean              @default(true)
+  overridesRuleId     String?
+  lastExecutedAt      DateTime?
+  createdById         String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  // Relations
+  organization     Organization?          @relation(fields: [organizationId], references: [id])
+  overridesRule    NotificationRule?      @relation("RuleOverride", fields: [overridesRuleId], references: [id])
+  overriddenBy     NotificationRule[]     @relation("RuleOverride")
+  createdBy        User                   @relation("NotificationRuleCreator", fields: [createdById], references: [id])
+  executions       NotificationRuleExecution[]
+  notificationLogs NotificationLog[]
+
+  @@index([organizationId, active])
+  @@index([isGlobal])
+  @@index([templateKey])
+  @@index([overridesRuleId])
+  @@map("notification_rules")
+}
+
+// ============================================
+// MODEL: NotificationRuleExecution (idempotency + monitoring)
+// ============================================
+
+model NotificationRuleExecution {
+  id              String               @id @default(cuid())
+  ruleId          String
+  organizationId  String
+  startedAt       DateTime
+  completedAt     DateTime?
+  status          RuleExecutionStatus
+  usersTargeted   Int                  @default(0)
+  usersSent       Int                  @default(0)
+  usersFailed     Int                  @default(0)
+  usersEscalated  Int                  @default(0)
+  triggeredBy     String
+  executionToken  String               @unique
+  errorMessage    String?
+
+  // Relations
+  rule             NotificationRule    @relation(fields: [ruleId], references: [id])
+  organization     Organization        @relation(fields: [organizationId], references: [id])
+  notificationLogs NotificationLog[]
+
+  @@index([ruleId, startedAt(sort: Desc)])
+  @@index([organizationId, startedAt(sort: Desc)])
+  @@index([status])
+  @@map("notification_rule_executions")
+}
+
+// ============================================
+// MODEL: NotificationLog (append-only delivery log)
+// ============================================
+
+model NotificationLog {
+  id                String               @id @default(cuid())
+  organizationId    String
+  userId            String
+  ruleId            String?
+  ruleExecutionId   String?
+  templateKey       String
+  templateVersionId String
+  channel           ChannelType
+  category          NotificationCategory
+  status            LogStatus
+  providerMessageId String?
+  errorMessage      String?
+  retryCount        Int                  @default(0)
+  criticalOverride  Boolean              @default(false)
+  metadata          Json?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime             @default(now())
+
+  // Relations
+  organization    Organization               @relation(fields: [organizationId], references: [id])
+  user            User                       @relation("UserNotificationLogs", fields: [userId], references: [id])
+  templateVersion NotificationTemplateVersion @relation(fields: [templateVersionId], references: [id])
+  rule            NotificationRule?          @relation(fields: [ruleId], references: [id])
+  ruleExecution   NotificationRuleExecution? @relation(fields: [ruleExecutionId], references: [id])
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+  @@index([templateKey, createdAt(sort: Desc)])
+  @@index([providerMessageId])
+  @@index([ruleExecutionId, userId])
+  @@map("notification_logs")
+}
+
+// ============================================
+// MODEL: NotificationSubscription (Web Push per device)
+// ============================================
+
+model NotificationSubscription {
+  id             String             @id @default(cuid())
+  organizationId String
+  userId         String
+  endpoint       String
+  p256dh         String
+  auth           String
+  userAgent      String?
+  status         SubscriptionStatus @default(ACTIVE)
+  lastUsedAt     DateTime?
+  lastErrorAt    DateTime?
+  createdAt      DateTime           @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation("UserNotificationSubscriptions", fields: [userId], references: [id])
+
+  @@unique([userId, endpoint])
+  @@index([userId, status])
+  @@index([organizationId])
+  @@index([status])
+  @@map("notification_subscriptions")
+}
+
+// ============================================
+// MODEL: NotificationPreference (per-user channel prefs)
+// ============================================
+
+model NotificationPreference {
+  userId          String    @id
+  organizationId  String
+  pushEnabled     Boolean   @default(true)
+  emailEnabled    Boolean   @default(true)
+  whatsappEnabled Boolean   @default(false)
+  digestMode      String    @default("IMMEDIATE")
+  emailBouncedAt  DateTime?
+  unsubscribeToken String   @unique
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user         User         @relation("UserNotificationPreference", fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+  @@index([unsubscribeToken])
+  @@map("notification_preferences")
+}

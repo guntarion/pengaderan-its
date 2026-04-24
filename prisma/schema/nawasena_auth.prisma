@@ -77,6 +77,10 @@ model User {
   socialContractStatus    UserPaktaStatus?
   paktaPengader2027Status UserPaktaStatus?
 
+  // M03: Contact sharing + interest matching
+  shareContact    Boolean  @default(true) // opt-out: false = hide contact from peers
+  interests       Json     @default("[]")  // array of interest strings for Kasuh matchmaking
+
   // Audit fields
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -116,6 +120,27 @@ model User {
   // AI usage tracking
   aiUsage           AIUsage[]
   aiOperationLogs   AIOperationLog[]
+
+  // M15 Notification relations
+  notificationPreference    NotificationPreference?       @relation("UserNotificationPreference")
+  notificationLogs          NotificationLog[]             @relation("UserNotificationLogs")
+  notificationSubscriptions NotificationSubscription[]    @relation("UserNotificationSubscriptions")
+  notificationVersionsCreated NotificationTemplateVersion[] @relation("NotificationVersionCreator")
+  notificationRulesCreated  NotificationRule[]            @relation("NotificationRuleCreator")
+
+  // M03 Struktur Angkatan relations
+  kpGroupsCoordinating    KPGroup[]       @relation("KPGroupCoordinator")
+  kpGroupsCreated         KPGroup[]       @relation("KPGroupCreator")
+  kpGroupMemberships      KPGroupMember[] @relation("KPGroupMemberUser")
+  buddyPairsCreated       BuddyPair[]     @relation("BuddyPairCreator")
+  buddyPairMemberships    BuddyPairMember[] @relation("BuddyPairMemberUser")
+  kasuhPairsAsMaba        KasuhPair[]     @relation("KasuhPairMaba")
+  kasuhPairsAsKasuh       KasuhPair[]     @relation("KasuhPairKasuh")
+  kasuhPairsCreated       KasuhPair[]     @relation("KasuhPairCreator")
+  pairingRequestsAsRequester PairingRequest[] @relation("PairingRequestRequester")
+  pairingRequestsAsSubject   PairingRequest[] @relation("PairingRequestSubject")
+  pairingRequestsResolved    PairingRequest[] @relation("PairingRequestResolver")
+  bulkPairingBatchesCommitted BulkPairingBatch[] @relation("BulkPairingBatchCommitter")
 
   @@unique([organizationId, nrp])
   @@index([organizationId, role])

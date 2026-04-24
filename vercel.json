@@ -1,0 +1,32 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/maba-pulse-daily",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/maba-journal-saturday",
+      "schedule": "0 10 * * 6"
+    },
+    {
+      "path": "/api/cron/maba-journal-sunday",
+      "schedule": "0 12 * * 0"
+    },
+    {
+      "path": "/api/cron/kp-standup-daily",
+      "schedule": "0 10 * * 1-5"
+    },
+    {
+      "path": "/api/cron/kp-debrief-weekly",
+      "schedule": "0 2 * * 1"
+    },
+    {
+      "path": "/api/cron/kasuh-logbook-biweekly",
+      "schedule": "0 3 * * 6"
+    },
+    {
+      "path": "/api/cron/daily-scan",
+      "schedule": "0 1 * * *"
+    }
+  ]
+}

@@ -24,6 +24,14 @@ const AUDITED_MODELS = new Set([
   'PaktaRejection',
   'PaktaVersion',
   'WhitelistEmail',
+  // M03 Struktur Angkatan
+  'KPGroup',
+  'KPGroupMember',
+  'BuddyPair',
+  'BuddyPairMember',
+  'KasuhPair',
+  'PairingRequest',
+  'BulkPairingBatch',
 ]);
 
 function getAuditAction(model: string, operation: string): string {
