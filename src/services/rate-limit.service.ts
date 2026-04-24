@@ -327,7 +327,7 @@ class RateLimitService {
     const now = new Date();
     return prisma.aIUsage.findMany({
       where: { year: year || now.getFullYear(), month: month || now.getMonth() + 1 },
-      include: { user: { select: { id: true, name: true, email: true } } },
+      include: { user: { select: { id: true, fullName: true, email: true } } },
       orderBy: { operationCount: 'desc' },
     });
   }
@@ -359,7 +359,7 @@ class RateLimitService {
     const [logs, total] = await Promise.all([
       prisma.aIOperationLog.findMany({
         where,
-        include: { user: { select: { id: true, name: true, email: true } } },
+        include: { user: { select: { id: true, fullName: true, email: true } } },
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,

@@ -1,0 +1,216 @@
+// prisma/schema/nawasena_auth.prisma
+// Domain: User, WhitelistEmail, RevokedSession + NextAuth adapter tables
+// NAWASENA M01 — replaces template User + Role enum
+
+// ============================================
+// ENUMS — Auth & User
+// ============================================
+
+enum UserRole {
+  MABA
+  KP
+  KASUH
+  OC
+  ELDER
+  SC
+  PEMBINA
+  BLM
+  SATGAS
+  ALUMNI
+  DOSEN_WALI
+  SUPERADMIN
+}
+
+enum UserStatus {
+  PENDING_PROFILE_SETUP
+  PENDING_PAKTA
+  PENDING_RESIGN
+  ACTIVE
+  DEACTIVATED
+}
+
+// Per-pakta type status (denormalized on User for fast gate check)
+enum UserPaktaStatus {
+  PENDING
+  SIGNED
+  REJECTED
+  PENDING_RESIGN
+}
+
+// ============================================
+// MODEL: User (NAWASENA identity)
+// ============================================
+
+model User {
+  id            String     @id @default(cuid())
+
+  // Identity
+  email         String     @unique // always lowercased
+  emailVerified DateTime?
+  nrp           String?    // 10-digit student ID (wajib MABA, optional others)
+  fullName      String
+  displayName   String?    // panggilan
+  image         String?
+
+  // Scoping
+  organizationId  String
+  currentCohortId String?
+  role            UserRole   @default(MABA)
+  status          UserStatus @default(PENDING_PROFILE_SETUP)
+
+  // NextAuth adapter field (for credentials/OAuth password)
+  password      String?
+
+  // Demographics (opt-in, all nullable)
+  isRantau              Boolean?
+  isKIP                 Boolean?
+  hasDisability         Boolean?
+  disabilityNotes       String?
+  province              String?  // 2-char province code (e.g. "JI", "JK")
+  emergencyContactName  String?
+  emergencyContactRelation String?
+  emergencyContactPhone String?
+  demographicsUpdatedAt DateTime?
+
+  // Pakta status (denormalized for fast middleware gate check)
+  paktaPanitiaStatus      UserPaktaStatus?
+  socialContractStatus    UserPaktaStatus?
+  paktaPengader2027Status UserPaktaStatus?
+
+  // Audit fields
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deactivatedAt   DateTime?
+  deactivatedReason String?
+  lastLoginAt     DateTime?
+  lastLoginIp     String?
+
+  // Session revocation via epoch
+  sessionEpoch    Int      @default(0)
+
+  // Relations
+  organization    Organization    @relation(fields: [organizationId], references: [id])
+  currentCohort   Cohort?         @relation("UserCurrentCohort", fields: [currentCohortId], references: [id])
+
+  // NextAuth relations
+  accounts        Account[]
+  sessions        Session[]
+
+  // Pakta relations
+  paktaSignatures PaktaSignature[]
+  paktaRejections PaktaRejection[]
+
+  // Audit log (as actor and as subject)
+  auditLogsActor  NawasenaAuditLog[] @relation("AuditActor")
+  auditLogsSubject NawasenaAuditLog[] @relation("AuditSubject")
+
+  // Cohorts created by this user
+  cohortsCreated  Cohort[]        @relation("CohortCreator")
+
+  // Whitelist added by this user
+  whitelistAdded  WhitelistEmail[] @relation("WhitelistAddedBy")
+
+  // PaktaVersion published by this user
+  paktaVersionsPublished PaktaVersion[] @relation("PaktaPublisher")
+
+  // AI usage tracking
+  aiUsage           AIUsage[]
+  aiOperationLogs   AIOperationLog[]
+
+  @@unique([organizationId, nrp])
+  @@index([organizationId, role])
+  @@index([organizationId, currentCohortId])
+  @@index([organizationId, status])
+  @@map("users")
+}
+
+// ============================================
+// NextAuth Adapter Models (must match @next-auth/prisma-adapter)
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// MODEL: WhitelistEmail (pre-approved emails)
+// ============================================
+
+model WhitelistEmail {
+  id                  String    @id @default(cuid())
+  organizationId      String
+  email               String    // lowercased
+  preassignedRole     UserRole
+  preassignedCohortId String?
+  addedBy             String
+  note                String?
+  isConsumed          Boolean   @default(false)
+  consumedAt          DateTime?
+  consumedByUserId    String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  addedByUser        User         @relation("WhitelistAddedBy", fields: [addedBy], references: [id])
+  preassignedCohort  Cohort?      @relation("CohortWhitelist", fields: [preassignedCohortId], references: [id])
+
+  @@unique([organizationId, email])
+  @@index([isConsumed])
+  @@map("whitelist_emails")
+}
+
+// ============================================
+// MODEL: RevokedSession (granular JTI revocation)
+// ============================================
+
+model RevokedSession {
+  id          String   @id @default(cuid())
+  userId      String
+  jti         String?  // JWT ID being revoked
+  revokedAt   DateTime @default(now())
+  revokedBy   String?
+  reason      String?
+  expiresAt   DateTime // prune-able after this date
+
+  @@index([userId])
+  @@index([jti])
+  @@index([expiresAt])
+  @@map("revoked_sessions")
+}

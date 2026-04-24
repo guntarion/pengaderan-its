@@ -1,0 +1,80 @@
+// prisma/schema/nawasena_base.prisma
+// Domain: Organization + Cohort (NAWASENA M01)
+// Note: files in prisma/schema/ — no subdirectory support in Prisma multi-file
+
+// ============================================
+// ENUMS — Organization & Cohort
+// ============================================
+
+enum OrganizationStatus {
+  ACTIVE
+  ARCHIVED
+  PENDING_SETUP
+}
+
+enum CohortStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+// ============================================
+// MODEL: Organization (root tenant anchor)
+// ============================================
+
+model Organization {
+  id           String             @id @default(cuid())
+  code         String             @unique // e.g., "HMTC", "HMM", "HME"
+  name         String             // short name
+  fullName     String             // full legal name
+  facultyCode  String?            // e.g., "FTEIC"
+  contactEmail String?
+  status       OrganizationStatus @default(ACTIVE)
+  settings     Json?              // per-org config: timezone, locale, email template overrides
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  archivedAt   DateTime?
+
+  // Relations
+  users           User[]
+  cohorts         Cohort[]
+  paktaVersions   PaktaVersion[]
+  paktaSignatures PaktaSignature[]
+  paktaRejections PaktaRejection[]
+  auditLogs       NawasenaAuditLog[]
+  whitelistEmails WhitelistEmail[]
+
+  @@index([status])
+  @@map("organizations")
+}
+
+// ============================================
+// MODEL: Cohort (annual intake group)
+// ============================================
+
+model Cohort {
+  id             String      @id @default(cuid())
+  organizationId String
+  code           String      // e.g., "C26", "C27"
+  name           String      // e.g., "NAWASENA 2026"
+  startDate      DateTime
+  endDate        DateTime
+  status         CohortStatus @default(DRAFT)
+  isActive       Boolean     @default(false) // at most 1 true per org (partial unique in SQL)
+  createdBy      String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  archivedAt     DateTime?
+
+  // Relations
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  creator         User             @relation("CohortCreator", fields: [createdBy], references: [id])
+  users           User[]           @relation("UserCurrentCohort")
+  paktaSignatures PaktaSignature[]
+  whitelistEmails WhitelistEmail[] @relation("CohortWhitelist")
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([organizationId, isActive])
+  @@map("cohorts")
+}

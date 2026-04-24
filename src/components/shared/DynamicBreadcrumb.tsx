@@ -95,7 +95,7 @@ export function DynamicBreadcrumb({
         )}
 
         {/* Segments */}
-        {items.map((item, index) => (
+        {items.map((item) => (
           <React.Fragment key={item.href}>
             <BreadcrumbItem>
               {item.isLast ? (

@@ -1,4 +1,4 @@
-// src/app/(DashboardLayout)/layout/vertical/sidebar/Sidebaritems.ts
+// src/components/layout/vertical/sidebar/Sidebaritems.ts
 import { uniqueId } from 'lodash';
 
 export interface ChildItem {
@@ -9,7 +9,7 @@ export interface ChildItem {
   url?: string;
   color?: string;
   isPro?: boolean;
-  roles?: string[]; // Add roles property
+  roles?: string[];
 }
 
 export interface MenuItem {
@@ -22,17 +22,32 @@ export interface MenuItem {
   children?: ChildItem[];
   url?: string;
   isPro?: boolean;
-  roles?: string[]; // Add roles property
+  roles?: string[];
 }
 
 /**
- * Sidebar menu items with role-based access control
- * Each item can specify which roles can access it
+ * NAWASENA sidebar menu items.
+ * Role-based access via the `roles` array on each item.
+ * The RoleAwareNavItem component filters items based on user.role.
+ *
+ * NAWASENA roles: MABA, KP, KASUH, OC, ELDER, SC, PEMBINA, BLM, SATGAS, ALUMNI, DOSEN_WALI, SUPERADMIN
  */
+
+// Shorthand role groups
+const ALL_NAWASENA = ['MABA', 'KP', 'KASUH', 'OC', 'ELDER', 'SC', 'PEMBINA', 'BLM', 'SATGAS', 'ALUMNI', 'DOSEN_WALI', 'SUPERADMIN'];
+const COMMITTEE = ['KP', 'KASUH', 'OC', 'ELDER', 'SC', 'PEMBINA', 'BLM', 'SATGAS', 'SUPERADMIN'];
+const SENIOR_STAFF = ['SC', 'PEMBINA', 'BLM', 'SATGAS', 'SUPERADMIN'];
+const ADMIN_ROLES = ['SC', 'SUPERADMIN'];
+const SUPERADMIN_ONLY = ['SUPERADMIN'];
+
 const SidebarContent: MenuItem[] = [
+  /* ----------------------------------------------------------------- */
+  /* UMUM — Semua pengguna                                               */
+  /* ----------------------------------------------------------------- */
   {
-    isPro: true,
-    heading: 'Dashboards',
+    isPro: false,
+    heading: 'Umum',
+    roles: ALL_NAWASENA,
     children: [
       {
         name: 'Dashboard',
@@ -40,131 +55,185 @@ const SidebarContent: MenuItem[] = [
         id: uniqueId(),
         url: '/',
         isPro: false,
-        roles: ['guest', 'member', 'moderator', 'editor', 'viewer', 'admin'], // All roles can see dashboard
+        roles: ALL_NAWASENA,
       },
-
       {
-        name: 'AI Pages',
+        name: 'Profil Saya',
+        icon: 'solar:user-circle-linear',
+        id: uniqueId(),
+        url: '/profile',
+        isPro: false,
+        roles: ALL_NAWASENA,
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* PAKTA — Proses penandatanganan komitmen                             */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Pakta & Komitmen',
+    roles: ALL_NAWASENA,
+    children: [
+      {
+        name: 'Tandatangani Pakta',
+        icon: 'solar:pen-new-square-line-duotone',
         id: uniqueId(),
         isPro: false,
-        roles: ['admin'], // Only admin can see this section
-        icon: 'solar:home-angle-linear',
+        roles: ALL_NAWASENA,
         children: [
           {
-            name: 'Sample Page',
             id: uniqueId(),
-            url: '/sample-page',
+            name: 'Pakta Panitia',
+            url: '/pakta/sign/PAKTA_PANITIA',
             isPro: false,
+            roles: COMMITTEE,
           },
           {
-            name: 'Qwen AI',
             id: uniqueId(),
-            url: '/ai-page/qwen-ai',
+            name: 'Social Contract',
+            url: '/pakta/sign/SOCIAL_CONTRACT_MABA',
             isPro: false,
-          },
-
-          {
-            name: 'Anthropic AI',
-            id: uniqueId(),
-            url: '/ai-page/anthropic-ai',
-            isPro: false,
+            roles: ['MABA', ...COMMITTEE],
           },
           {
-            name: 'Ollama',
             id: uniqueId(),
-            url: '/ai-page/ollama',
+            name: 'Pakta Pengader 2027',
+            url: '/pakta/sign/PAKTA_PENGADER_2027',
             isPro: false,
-          },
-          {
-            name: 'DeepSeek',
-            id: uniqueId(),
-            url: '/ai-page/deepseekai',
-            isPro: false,
-          },
-          {
-            name: 'DeepSeek Reasoning',
-            id: uniqueId(),
-            url: '/ai-page/deepseekReasoning',
-            isPro: false,
-          },
-          {
-            name: 'Gemini',
-            id: uniqueId(),
-            url: '/ai-page/geminiai',
-            isPro: false,
-          },
-          {
-            name: 'Perplexity',
-            id: uniqueId(),
-            url: '/ai-page/perplexityai',
-            isPro: false,
-          },
-          {
-            name: 'Perplexity Sonar',
-            id: uniqueId(),
-            url: '/ai-page/sonarperplexity',
-            isPro: false,
+            roles: COMMITTEE,
           },
         ],
       },
     ],
   },
+
+  /* ----------------------------------------------------------------- */
+  /* ADMIN — Manajemen organisasi (SC, PEMBINA, BLM, SATGAS, SUPERADMIN) */
+  /* ----------------------------------------------------------------- */
   {
     isPro: false,
-    heading: 'Mockup',
+    heading: 'Administrasi',
+    roles: SENIOR_STAFF,
     children: [
       {
-        name: 'Proto Page',
+        name: 'Pengguna',
+        icon: 'solar:users-group-rounded-linear',
         id: uniqueId(),
         isPro: false,
-        icon: 'solar:battery-full-minimalistic-line-duotone',
-        roles: ['member', 'moderator', 'editor', 'admin'], // Only these roles can see this
+        roles: SENIOR_STAFF,
         children: [
           {
             id: uniqueId(),
-            name: 'Image Upload',
-            url: '/mockup/image-upload',
+            name: 'Daftar Pengguna',
+            url: '/admin/users',
             isPro: false,
-            roles: ['member', 'moderator', 'editor', 'admin'],
+            roles: SENIOR_STAFF,
           },
           {
             id: uniqueId(),
-            name: 'File Upload',
-            url: '/mockup/file-upload',
+            name: 'Import CSV',
+            url: '/admin/users/bulk-import',
             isPro: false,
-            roles: ['moderator', 'editor', 'admin'],
+            roles: ADMIN_ROLES,
           },
           {
             id: uniqueId(),
-            name: 'Send Email',
-            url: '/mockup/send-email',
+            name: 'Whitelist Email',
+            url: '/admin/whitelist',
             isPro: false,
-            roles: ['moderator', 'editor', 'admin'],
+            roles: SENIOR_STAFF,
           },
         ],
       },
-    ],
-  },
-  {
-    heading: '',
-    isPro: false,
-    roles: ['admin'], // Only admin can see this section
-    children: [
       {
-        name: 'User Management',
-        icon: 'solar:users-group-rounded-outline',
+        name: 'Kohort',
+        icon: 'solar:users-group-two-rounded-linear',
         id: uniqueId(),
-        url: '/users',
         isPro: false,
-        roles: ['admin'],
+        roles: SENIOR_STAFF,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Daftar Kohort',
+            url: '/admin/cohorts',
+            isPro: false,
+            roles: SENIOR_STAFF,
+          },
+          {
+            id: uniqueId(),
+            name: 'Tambah Kohort',
+            url: '/admin/cohorts/new',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+        ],
       },
       {
-        name: 'Sample Page',
-        icon: 'solar:notes-minimalistic-outline',
+        name: 'Pakta & Dokumen',
+        icon: 'solar:document-text-linear',
         id: uniqueId(),
-        url: '/sample-page',
         isPro: false,
-        roles: ['admin', 'editor'],
+        roles: SENIOR_STAFF,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Versi Pakta',
+            url: '/admin/pakta',
+            isPro: false,
+            roles: SENIOR_STAFF,
+          },
+          {
+            id: uniqueId(),
+            name: 'Terbitkan Versi Baru',
+            url: '/admin/pakta/new',
+            isPro: false,
+            roles: ADMIN_ROLES,
+          },
+        ],
+      },
+      {
+        name: 'Audit Log',
+        icon: 'solar:clipboard-list-linear',
+        id: uniqueId(),
+        url: '/admin/audit-log',
+        isPro: false,
+        roles: SENIOR_STAFF,
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
+  /* SUPERADMIN — Manajemen lintas-organisasi                            */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Sistem',
+    roles: SUPERADMIN_ONLY,
+    children: [
+      {
+        name: 'Organisasi',
+        icon: 'solar:buildings-2-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: SUPERADMIN_ONLY,
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Daftar Organisasi',
+            url: '/admin/organizations',
+            isPro: false,
+            roles: SUPERADMIN_ONLY,
+          },
+          {
+            id: uniqueId(),
+            name: 'Tambah Organisasi',
+            url: '/admin/organizations/new',
+            isPro: false,
+            roles: SUPERADMIN_ONLY,
+          },
+        ],
       },
     ],
   },

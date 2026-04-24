@@ -1,0 +1,12 @@
+// prisma/schema/base.prisma
+// Generator and datasource blocks ONLY — do not add models or enums here.
+// All models go into domain-specific files in this folder.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}

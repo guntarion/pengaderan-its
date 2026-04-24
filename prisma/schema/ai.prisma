@@ -1,0 +1,71 @@
+// prisma/schema/ai.prisma
+// Domain: AI usage tracking (preserved from template)
+// These models track AI API usage per user for cost management and rate limiting.
+
+// AI operation type registry — add new operations here before implementing API routes.
+// Naming: module_action (e.g., content_analyze, web_search)
+enum AiOperationType {
+  chat_message
+  text_generate
+  text_improve
+  text_summarize
+  text_translate
+  content_analyze
+  sentiment_analyze
+  data_extract
+  vision_analyze
+  web_search
+  web_search_pro
+}
+
+// Monthly aggregate AI usage per user
+model AIUsage {
+  id                 String   @id @default(cuid())
+  userId             String
+  year               Int
+  month              Int      // 1-12
+  operationCount     Int      @default(0)
+  limit              Int      @default(300)
+
+  // Breakdown by operation category
+  chatMessages       Int      @default(0)
+  textOperations     Int      @default(0)
+  analysisOperations Int      @default(0)
+  visionOperations   Int      @default(0)
+  otherOperations    Int      @default(0)
+
+  // Cost tracking (USD)
+  totalTokensUsed    Int      @default(0)
+  totalCostUSD       Float    @default(0)
+  totalInputTokens   Int      @default(0)
+  totalOutputTokens  Int      @default(0)
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year, month])
+  @@map("ai_usage")
+}
+
+// Per-operation log for detailed tracking and cost auditing
+model AIOperationLog {
+  id            String           @id @default(cuid())
+  userId        String
+  operationType AiOperationType
+  cost          Int              @default(1)   // Credits consumed
+  aiProvider    String?
+  modelUsed     String?
+  tokensUsed    Int?
+  responseTime  Int?             // milliseconds
+  costUSD       Float?
+  inputTokens   Int?
+  outputTokens  Int?
+  success       Boolean          @default(true)
+  errorMessage  String?
+  createdAt     DateTime         @default(now())
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([operationType])
+  @@map("ai_operation_logs")
+}

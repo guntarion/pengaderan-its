@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Prisma
+// Mock Prisma — nawasenaAuditLog is the NAWASENA audit table
 const mockCreate = vi.fn();
 const mockFindMany = vi.fn();
 const mockCount = vi.fn();
 
 vi.mock('@/utils/prisma', () => ({
   prisma: {
-    auditLog: {
+    nawasenaAuditLog: {
       create: (...args: unknown[]) => mockCreate(...args),
       findMany: (...args: unknown[]) => mockFindMany(...args),
       count: (...args: unknown[]) => mockCount(...args),
@@ -31,18 +31,18 @@ describe('audit-log.service', () => {
         action: 'update',
         resource: 'user',
         resourceId: 'user-2',
-        oldValue: { role: 'member' },
-        newValue: { role: 'admin' },
+        oldValue: { role: 'MABA' },
+        newValue: { role: 'SC' },
       });
 
+      // Service maps: userId→actorUserId, resource→entityType, resourceId→entityId
       expect(mockCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          userId: 'user-1',
-          action: 'update',
-          resource: 'user',
-          resourceId: 'user-2',
-          oldValue: { role: 'member' },
-          newValue: { role: 'admin' },
+          actorUserId: 'user-1',
+          entityType: 'user',
+          entityId: 'user-2',
+          beforeValue: { role: 'MABA' },
+          afterValue: { role: 'SC' },
         }),
       });
     });
@@ -63,15 +63,14 @@ describe('audit-log.service', () => {
       mockCreate.mockResolvedValue({ id: '2' });
 
       await auditLog.record({
-        action: 'export',
+        action: 'import',
         resource: 'report',
         metadata: { format: 'csv', rows: 500 },
       });
 
       expect(mockCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          action: 'export',
-          resource: 'report',
+          entityType: 'report',
           metadata: { format: 'csv', rows: 500 },
         }),
       });
@@ -80,7 +79,7 @@ describe('audit-log.service', () => {
 
   describe('fromContext', () => {
     const mockCtx = {
-      user: { id: 'user-ctx', email: 'test@test.com', name: 'Test', role: 'admin' },
+      user: { id: 'user-ctx', email: 'test@test.com', name: 'Test', role: 'SC' },
       params: {},
       requestId: 'req-123',
       log: {} as ReturnType<typeof import('@/lib/logger').createLogger>,
@@ -97,10 +96,9 @@ describe('audit-log.service', () => {
 
       expect(mockCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          userId: 'user-ctx',
-          action: 'delete',
-          resource: 'project',
-          resourceId: 'proj-1',
+          actorUserId: 'user-ctx',
+          entityType: 'project',
+          entityId: 'proj-1',
           metadata: { requestId: 'req-123' },
         }),
       });
@@ -146,7 +144,7 @@ describe('audit-log.service', () => {
       await auditLog.getResourceHistory('user', 'user-1');
 
       expect(mockFindMany).toHaveBeenCalledWith({
-        where: { resource: 'user', resourceId: 'user-1' },
+        where: { entityType: 'user', entityId: 'user-1' },
         orderBy: { createdAt: 'desc' },
         take: 50,
       });
@@ -160,7 +158,7 @@ describe('audit-log.service', () => {
       await auditLog.getUserActivity('user-1', 20);
 
       expect(mockFindMany).toHaveBeenCalledWith({
-        where: { userId: 'user-1' },
+        where: { actorUserId: 'user-1' },
         orderBy: { createdAt: 'desc' },
         take: 20,
       });

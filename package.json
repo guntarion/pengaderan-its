@@ -16,7 +16,11 @@
     "test:unit": "vitest run",
     "test:e2e": "npx playwright test --config=e2e/playwright.config.ts",
     "test:e2e:headed": "npx playwright test --config=e2e/playwright.config.ts --headed",
-    "test:e2e:ui": "npx playwright test --config=e2e/playwright.config.ts --ui"
+    "test:e2e:ui": "npx playwright test --config=e2e/playwright.config.ts --ui",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -55,6 +59,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tabler/icons-react": "3.5.0",
     "@tanstack/react-table": "^8.21.3",
+    "@types/papaparse": "^5.5.2",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "bcryptjs": "^3.0.2",
@@ -79,6 +84,7 @@
     "next-themes": "^0.4.6",
     "nodemailer": "^6.10.0",
     "openai": "^4.86.1",
+    "papaparse": "^5.5.3",
     "prisma": "^6.19.0",
     "react": "^18.2.0",
     "react-apexcharts": "1.4.1",

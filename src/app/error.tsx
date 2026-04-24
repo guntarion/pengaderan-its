@@ -4,6 +4,7 @@
 // Catches unhandled errors at the root level.
 // Each route group can have its own error.tsx for more specific handling.
 
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
@@ -30,7 +31,7 @@ export default function GlobalError({
         <div className="flex items-center justify-center gap-3">
           <Button onClick={reset}>Try again</Button>
           <Button variant="outline" asChild>
-            <a href="/">Go home</a>
+            <Link href="/">Go home</Link>
           </Button>
         </div>
       </div>

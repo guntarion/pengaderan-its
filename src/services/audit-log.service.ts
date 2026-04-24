@@ -1,27 +1,14 @@
 // src/services/audit-log.service.ts
-// Generic audit logging for tracking user actions.
+// Generic audit logging service for NAWASENA.
+// Wraps the nawasena_audit_logs table.
 //
-// Usage:
-//   import { auditLog } from '@/services/audit-log.service';
+// For NAWASENA-specific audit (pakta, role change, bulk import),
+// use @/lib/audit/audit-helpers.ts directly with AuditAction enum.
 //
-//   await auditLog.record({
-//     userId: user.id,
-//     action: 'update',
-//     resource: 'user',
-//     resourceId: targetUser.id,
-//     oldValue: { role: 'member' },
-//     newValue: { role: 'admin' },
-//     request: req,
-//   });
-//
-//   // In API handlers with context:
-//   await auditLog.fromContext(ctx, {
-//     action: 'delete',
-//     resource: 'project',
-//     resourceId: projectId,
-//   });
+// This service provides a generic API compatible with the rest of the template.
 
 import { prisma } from '@/utils/prisma';
+import { AuditAction } from '@prisma/client';
 import { createLogger } from '@/lib/logger';
 import type { NextRequest } from 'next/server';
 import type { ApiContext } from '@/lib/api/middleware';
@@ -74,12 +61,26 @@ export interface AuditLogQuery {
   limit?: number;
 }
 
+// Map generic action strings to AuditAction enum
+function mapToAuditAction(action: string): AuditAction {
+  const mapping: Record<string, AuditAction> = {
+    create: AuditAction.USER_CREATE,
+    update: AuditAction.USER_UPDATE,
+    delete: AuditAction.USER_DEACTIVATE,
+    login: AuditAction.LOGIN,
+    logout: AuditAction.LOGOUT,
+    role_change: AuditAction.USER_ROLE_CHANGE,
+    import: AuditAction.USER_BULK_IMPORT,
+  };
+  return mapping[action] ?? AuditAction.USER_UPDATE;
+}
+
 // ---- Service ----
 
 export const auditLog = {
   /**
    * Record an audit log entry.
-   * Fire-and-forget by default — does not throw on failure.
+   * Fire-and-forget — does not throw on failure.
    */
   async record(input: AuditLogInput): Promise<void> {
     try {
@@ -92,28 +93,35 @@ export const auditLog = {
         ? input.request.headers.get('user-agent') || undefined
         : undefined;
 
-      await prisma.auditLog.create({
+      await prisma.nawasenaAuditLog.create({
         data: {
-          userId: input.userId,
-          action: input.action,
-          resource: input.resource,
-          resourceId: input.resourceId,
-          oldValue: input.oldValue !== undefined ? JSON.parse(JSON.stringify(input.oldValue)) : undefined,
-          newValue: input.newValue !== undefined ? JSON.parse(JSON.stringify(input.newValue)) : undefined,
-          ip,
-          userAgent,
-          metadata: input.metadata ? JSON.parse(JSON.stringify(input.metadata)) : undefined,
+          actorUserId: input.userId ?? undefined,
+          action: mapToAuditAction(input.action),
+          entityType: input.resource,
+          entityId: input.resourceId ?? input.userId ?? 'unknown',
+          beforeValue: input.oldValue !== undefined
+            ? JSON.parse(JSON.stringify(input.oldValue))
+            : undefined,
+          afterValue: input.newValue !== undefined
+            ? JSON.parse(JSON.stringify(input.newValue))
+            : undefined,
+          ipAddress: ip,
+          userAgent: userAgent,
+          metadata: input.metadata
+            ? JSON.parse(JSON.stringify(input.metadata))
+            : undefined,
         },
       });
     } catch (err) {
-      // Audit logging should never break the main flow
-      log.error('Failed to record audit log', { error: err, input: { action: input.action, resource: input.resource } });
+      log.error('Failed to record audit log', {
+        error: err,
+        input: { action: input.action, resource: input.resource },
+      });
     }
   },
 
   /**
    * Record an audit log entry using API handler context.
-   * Auto-extracts userId from ctx.user.
    */
   async fromContext(
     ctx: ApiContext,
@@ -135,13 +143,15 @@ export const auditLog = {
    * Query audit logs with filtering and pagination.
    */
   async query(params: AuditLogQuery = {}) {
-    const { userId, resource, resourceId, action, from, to, page = 1, limit = 50 } = params;
+    const { userId, entityType, action, from, to, page = 1, limit = 50 } = {
+      entityType: params.resource,
+      ...params,
+    };
 
     const where = {
-      ...(userId && { userId }),
-      ...(resource && { resource }),
-      ...(resourceId && { resourceId }),
-      ...(action && { action }),
+      ...(userId && { actorUserId: userId }),
+      ...(entityType && { entityType }),
+      ...(action && { action: mapToAuditAction(action) }),
       ...((from || to) && {
         createdAt: {
           ...(from && { gte: from }),
@@ -151,13 +161,13 @@ export const auditLog = {
     };
 
     const [entries, total] = await Promise.all([
-      prisma.auditLog.findMany({
+      prisma.nawasenaAuditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.auditLog.count({ where }),
+      prisma.nawasenaAuditLog.count({ where }),
     ]);
 
     return {
@@ -175,8 +185,8 @@ export const auditLog = {
    * Get audit trail for a specific resource.
    */
   async getResourceHistory(resource: string, resourceId: string, limit = 50) {
-    return prisma.auditLog.findMany({
-      where: { resource, resourceId },
+    return prisma.nawasenaAuditLog.findMany({
+      where: { entityType: resource, entityId: resourceId },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
@@ -186,8 +196,8 @@ export const auditLog = {
    * Get recent activity for a user.
    */
   async getUserActivity(userId: string, limit = 50) {
-    return prisma.auditLog.findMany({
-      where: { userId },
+    return prisma.nawasenaAuditLog.findMany({
+      where: { actorUserId: userId },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });

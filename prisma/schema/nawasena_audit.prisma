@@ -1,0 +1,75 @@
+// prisma/schema/nawasena_audit.prisma
+// Domain: NawasenaAuditLog (NAWASENA-specific audit log, replaces generic AuditLog for scoped ops)
+// NAWASENA M01
+
+// ============================================
+// ENUMS — Audit
+// ============================================
+
+enum AuditAction {
+  USER_CREATE
+  USER_UPDATE
+  USER_DEACTIVATE
+  USER_ROLE_CHANGE
+  USER_BULK_IMPORT
+  USER_EMERGENCY_CONTACT_ACCESSED
+  ORG_CREATE
+  ORG_UPDATE
+  ORG_ARCHIVE
+  COHORT_CREATE
+  COHORT_UPDATE
+  COHORT_ARCHIVE
+  PAKTA_VERSION_PUBLISH
+  PAKTA_SIGN
+  PAKTA_REJECT
+  PAKTA_RESIGN_TRIGGER
+  WHITELIST_ADD
+  WHITELIST_REMOVE
+  LOGIN
+  LOGOUT
+  SESSION_REVOKE
+  SUPERADMIN_CROSS_ORG_ACCESS
+  FULL_DELETE_USER
+  EMERGENCY_BULK_SIGN
+}
+
+enum DemographicField {
+  IS_RANTAU
+  IS_KIP
+  HAS_DISABILITY
+  PROVINCE
+  EMERGENCY_CONTACT
+}
+
+// ============================================
+// MODEL: NawasenaAuditLog (append-only, dual actor/subject)
+// ============================================
+
+model NawasenaAuditLog {
+  id             String      @id @default(cuid())
+  organizationId String?     // nullable for platform-level actions
+  action         AuditAction
+  actorUserId    String?     // null for system actions
+  subjectUserId  String?     // for role change, pakta sign, etc.
+  entityType     String      // "User", "Cohort", "PaktaSignature", ...
+  entityId       String      // UUID as string
+  beforeValue    Json?       // snapshot before change
+  afterValue     Json?       // snapshot after change
+  reason         String?     @db.Text // required for role change, cross-org, full delete
+  ipAddress      String?
+  userAgent      String?     @db.Text
+  metadata       Json?       // additional context: file hash for bulk import, target org, etc.
+  createdAt      DateTime    @default(now())
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  actor        User?         @relation("AuditActor", fields: [actorUserId], references: [id])
+  subject      User?         @relation("AuditSubject", fields: [subjectUserId], references: [id])
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([actorUserId, createdAt(sort: Desc)])
+  @@index([subjectUserId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@map("nawasena_audit_logs")
+}

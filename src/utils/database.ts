@@ -48,14 +48,14 @@ export async function getCurrentUser() {
       where: { email: session.user.email },
       select: {
         id: true,
-        name: true,
+        fullName: true,
+        displayName: true,
         email: true,
         role: true,
         image: true,
-        namaPanggilan: true,
-        nomerHandphone: true,
-        gender: true,
-        tanggalLahir: true,
+        status: true,
+        organizationId: true,
+        currentCohortId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -63,7 +63,10 @@ export async function getCurrentUser() {
 
     return user;
   } catch (error) {
-    console.error('Error fetching current user from Prisma:', error);
+    // Use structured logging instead of console.error
+    const { createLogger } = await import('@/lib/logger');
+    const log = createLogger('database');
+    log.error('Error fetching current user from Prisma', { error });
     return null;
   }
 }
