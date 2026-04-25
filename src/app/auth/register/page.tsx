@@ -1,64 +1,65 @@
 // src/app/auth/register/page.tsx
-import Logo from '@/components/layout/shared/logo/Logo';
+import Image from 'next/image';
 import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import AuthRegister from '../authforms/AuthRegister';
 
 export const metadata: Metadata = {
-  title: 'Register - Guntar-NextJS',
-  description: 'Join the modern web application platform',
+  title: 'Daftar Akun',
+  description: 'Daftarkan akun NAWASENA untuk mengikuti pengaderan ITS.',
 };
 
-const BoxedRegister = () => {
+export default function RegisterPage() {
   return (
-    <div className='min-h-screen bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900'>
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-50">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-blue-100 dark:bg-blue-800"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-indigo-100 dark:bg-indigo-800"></div>
-        <div className="absolute top-1/3 left-1/4 w-32 h-32 rounded-full bg-blue-200/50 dark:bg-blue-700/50"></div>
-      </div>
-      
-      <div className='container mx-auto px-4 py-10 relative z-10'>
-        <div className='flex flex-col items-center justify-center min-h-[calc(100vh-5rem)]'>
-          <div className='w-full max-w-md'>
-            <div className='flex justify-center mb-6'>
-              <div className='p-2 bg-white rounded-full shadow-md'>
-                <Logo />
-              </div>
-            </div>
-            
-            <div className='bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden'>
-              <div className='px-8 py-10'>
-                <header className="text-center mb-6">
-                  <h1 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
-                    Create Guntar-NextJS Account
-                  </h1>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">
-                    Start your journey with modern web applications
-                  </p>
-                </header>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-sky-950 px-4 py-10">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center mb-6">
+          <Link href="/landingpage" aria-label="NAWASENA" className="block">
+            <Image
+              src="/images/logos/Logo-its-biru-transparan.webp"
+              alt="Logo ITS"
+              width={64}
+              height={64}
+              priority
+              className="h-16 w-16 object-contain"
+            />
+          </Link>
+          <h1 className="mt-4 text-xl font-bold text-sky-900 dark:text-sky-100 tracking-wide">
+            NAWASENA
+          </h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            Pengaderan ITS
+          </p>
+        </div>
 
-                <AuthRegister />
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-sky-100 dark:ring-slate-800 p-7">
+          <header className="text-center mb-6">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Daftar Akun
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Mulai perjalanan pengaderan Anda di ITS
+            </p>
+          </header>
 
-                <div className='flex gap-2 text-base text-gray-600 dark:text-gray-300 mt-6 items-center justify-center'>
-                  <p>Already have an account?</p>
-                  <Link href={'/auth/login'} className='text-blue-600 dark:text-blue-400 font-medium hover:underline'>
-                    Login
-                  </Link>
-                </div>
-              </div>
-            </div>
-            
-            <footer className="mt-8 text-center text-gray-600 dark:text-gray-400 text-sm">
-              &copy; {new Date().getFullYear()} Guntar-NextJS. All rights reserved.
-            </footer>
+          <AuthRegister />
+
+          <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center text-sm text-muted-foreground">
+            Sudah punya akun?{' '}
+            <Link
+              href="/auth/login"
+              className="text-sky-700 dark:text-sky-400 font-medium hover:underline"
+            >
+              Masuk
+            </Link>
           </div>
         </div>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          &copy; {new Date().getFullYear()} NAWASENA — Institut Teknologi Sepuluh Nopember
+        </p>
       </div>
     </div>
   );
-};
-
-export default BoxedRegister;
+}

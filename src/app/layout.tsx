@@ -12,7 +12,7 @@ export { metadata };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en'>
+    <html lang='id'>
       <head>
         <link rel='icon' href='/favicon.svg' type='image/svg+xml' />
         <link rel='manifest' href='/manifest.json' />

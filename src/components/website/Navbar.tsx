@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
@@ -29,11 +30,11 @@ export function Navbar() {
   }, []);
 
   const navItems = [
-    { name: 'Home', href: '/landingpage' },
-    { name: 'Features', href: '/landingpage#features' },
-    { name: 'About', href: '/landingpage#about' },
-    { name: 'Contact', href: '/landingpage#contact' },
+    { name: 'Beranda', href: '/landingpage' },
+    { name: 'Katalog Kegiatan', href: '/kegiatan' },
+    { name: 'Kesehatan Mental', href: '/mental-health' },
     { name: 'Lapor Anonim', href: '/anon-report' },
+    { name: 'Cek Status Laporan', href: '/anon-status' },
   ];
 
   return (
@@ -45,8 +46,27 @@ export function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
           {/* Logo */}
-          <Link href="/landingpage" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-primary">Guntar-NextJS</span>
+          <Link
+            href="/landingpage"
+            className="flex items-center gap-2.5"
+            aria-label="NAWASENA — Pengaderan ITS"
+          >
+            <Image
+              src="/images/logos/Logo-its-biru-transparan.webp"
+              alt="Logo ITS"
+              width={36}
+              height={36}
+              priority
+              className="h-9 w-9 object-contain"
+            />
+            <div className="flex flex-col leading-tight">
+              <span className="text-base font-bold tracking-wide text-sky-700">
+                NAWASENA
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+                Pengaderan ITS
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}

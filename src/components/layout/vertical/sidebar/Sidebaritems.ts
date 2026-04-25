@@ -439,12 +439,27 @@ const SidebarContent: MenuItem[] = [
         roles: ['MABA'],
       },
       {
-        name: 'Ajukan Pergantian Kasuh',
+        name: 'Kakak Kasuh',
         icon: 'solar:clipboard-list-linear',
         id: uniqueId(),
-        url: '/dashboard/kakak-c/request',
         isPro: false,
         roles: ['MABA'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Info Kasuh Saya',
+            url: '/dashboard/kakak-c',
+            isPro: false,
+            roles: ['MABA'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Ajukan Pergantian',
+            url: '/dashboard/kakak-c/request',
+            isPro: false,
+            roles: ['MABA'],
+          },
+        ],
       },
       {
         name: 'Grup Saya',
@@ -458,12 +473,27 @@ const SidebarContent: MenuItem[] = [
         name: 'Adik Asuh',
         icon: 'solar:heart-angle-linear',
         id: uniqueId(),
-        url: '/dashboard/kasuh/adik-asuh',
         isPro: false,
         roles: ['KASUH'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Daftar Adik Asuh',
+            url: '/dashboard/kasuh/adik-asuh',
+            isPro: false,
+            roles: ['KASUH'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Profil Adik',
+            url: '/dashboard/kasuh/adik',
+            isPro: false,
+            roles: ['KASUH'],
+          },
+        ],
       },
       {
-        name: 'Adik Asuh Saya',
+        name: 'Dashboard Kasuh',
         icon: 'solar:notebook-bookmark-linear',
         id: uniqueId(),
         url: '/dashboard/kasuh',
@@ -554,17 +584,47 @@ const SidebarContent: MenuItem[] = [
         name: 'Pulse Harian',
         icon: 'solar:heart-pulse-linear',
         id: uniqueId(),
-        url: '/dashboard/pulse',
         isPro: false,
         roles: ['MABA'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Check-in Hari Ini',
+            url: '/dashboard/pulse',
+            isPro: false,
+            roles: ['MABA'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Tren Pulse',
+            url: '/dashboard/pulse/trend',
+            isPro: false,
+            roles: ['MABA'],
+          },
+        ],
       },
       {
         name: 'Jurnal Mingguan',
         icon: 'solar:notebook-linear',
         id: uniqueId(),
-        url: '/dashboard/journal',
         isPro: false,
         roles: ['MABA'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Semua Jurnal',
+            url: '/dashboard/journal',
+            isPro: false,
+            roles: ['MABA'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Tulis Jurnal',
+            url: '/dashboard/journal/new',
+            isPro: false,
+            roles: ['MABA'],
+          },
+        ],
       },
     ],
   },
@@ -815,12 +875,12 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
-  /* KEHADIRAN MABA — M08 Scan Attendance PWA                            */
+  /* KEHADIRAN — M08 Scan Attendance PWA (MABA self-scan + OC verify)   */
   /* ----------------------------------------------------------------- */
   {
     isPro: false,
     heading: 'Kehadiran',
-    roles: ['MABA'],
+    roles: ['MABA', 'OC'],
     children: [
       {
         name: 'Scan Kehadiran',
@@ -828,7 +888,7 @@ const SidebarContent: MenuItem[] = [
         id: uniqueId(),
         url: '/dashboard/attendance/scan',
         isPro: false,
-        roles: ['MABA'],
+        roles: ['MABA', 'OC'],
       },
     ],
   },
@@ -1015,6 +1075,81 @@ const SidebarContent: MenuItem[] = [
   },
 
   /* ----------------------------------------------------------------- */
+  /* TRIWULAN — M14 Quarterly Review & Sign-off                         */
+  /* SC: buat + kelola; Pembina + BLM: tinjau; arsip semua senior       */
+  /* ----------------------------------------------------------------- */
+  {
+    isPro: false,
+    heading: 'Triwulan',
+    roles: ['SC', 'PEMBINA', 'BLM', 'SUPERADMIN'],
+    children: [
+      {
+        name: 'Triwulan SC',
+        icon: 'solar:calendar-check-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ['SC', 'SUPERADMIN'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Daftar Review',
+            url: '/dashboard/sc/triwulan',
+            isPro: false,
+            roles: ['SC', 'SUPERADMIN'],
+          },
+          {
+            id: uniqueId(),
+            name: 'Buat Review Baru',
+            url: '/dashboard/sc/triwulan/new',
+            isPro: false,
+            roles: ['SC', 'SUPERADMIN'],
+          },
+        ],
+      },
+      {
+        name: 'Triwulan Pembina',
+        icon: 'solar:diploma-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ['PEMBINA', 'SUPERADMIN'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Daftar Review',
+            url: '/dashboard/pembina/triwulan',
+            isPro: false,
+            roles: ['PEMBINA', 'SUPERADMIN'],
+          },
+        ],
+      },
+      {
+        name: 'Triwulan BLM',
+        icon: 'solar:shield-check-linear',
+        id: uniqueId(),
+        isPro: false,
+        roles: ['BLM', 'SUPERADMIN'],
+        children: [
+          {
+            id: uniqueId(),
+            name: 'Daftar Review',
+            url: '/dashboard/blm/triwulan',
+            isPro: false,
+            roles: ['BLM', 'SUPERADMIN'],
+          },
+        ],
+      },
+      {
+        name: 'Arsip Triwulan',
+        icon: 'solar:archive-linear',
+        id: uniqueId(),
+        url: '/dashboard/triwulan/archive',
+        isPro: false,
+        roles: ['BLM', 'SC', 'PEMBINA', 'SUPERADMIN'],
+      },
+    ],
+  },
+
+  /* ----------------------------------------------------------------- */
   /* SUPERADMIN — Manajemen lintas-organisasi                            */
   /* ----------------------------------------------------------------- */
   {
@@ -1067,6 +1202,14 @@ const SidebarContent: MenuItem[] = [
             roles: SUPERADMIN_ONLY,
           },
         ],
+      },
+      {
+        name: 'Audit Kesehatan Mental',
+        icon: 'solar:heart-search-linear',
+        id: uniqueId(),
+        url: '/dashboard/superadmin/mh-audit',
+        isPro: false,
+        roles: SUPERADMIN_ONLY,
       },
     ],
   },

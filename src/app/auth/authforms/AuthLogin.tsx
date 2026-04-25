@@ -36,46 +36,37 @@ const AuthLogin = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {(error || urlError) && (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="destructive">
           <AlertDescription>{error || urlError}</AlertDescription>
         </Alert>
       )}
 
-      <div className="space-y-4 text-center">
-        <h2 className="text-2xl font-bold text-blue-800">Login to Guntar-NextJS</h2>
-        <p className="text-gray-600">Modern web application platform built with Next.js</p>
-      </div>
-
-      <div className="relative my-8">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 text-gray-500 bg-white">Masuk dengan</span>
-        </div>
-      </div>
-
       <Button
         onClick={handleGoogleLogin}
         variant="outline"
-        className="w-full py-6 border-2 hover:bg-gray-50 transition-colors"
+        className="w-full h-12 border-sky-200 hover:bg-sky-50 hover:border-sky-300 dark:border-sky-900 dark:hover:bg-sky-950 transition-colors"
         type="button"
         disabled={loading}
       >
-        <div className="flex items-center justify-center w-full">
-          <FcGoogle className="h-6 w-6 mr-3" />
-          <span className="text-base font-medium">{loading ? 'Memproses...' : 'Masuk dengan Google'}</span>
-        </div>
+        <FcGoogle className="h-5 w-5 mr-3" />
+        <span className="text-sm font-medium">
+          {loading ? 'Memproses...' : 'Masuk dengan akun Google'}
+        </span>
       </Button>
 
-      <div className="pt-4 text-center">
-        <p className="text-sm text-gray-600">
-          Dengan masuk, Anda menyetujui <Link href="/terms" className="text-blue-600 hover:underline">Ketentuan Layanan</Link> dan {' '}
-          <Link href="/privacy" className="text-blue-600 hover:underline">Kebijakan Privasi</Link> kami
-        </p>
-      </div>
+      <p className="text-xs text-center text-muted-foreground leading-relaxed">
+        Dengan masuk, Anda menyetujui{' '}
+        <Link href="/terms" className="text-sky-700 dark:text-sky-400 hover:underline">
+          Ketentuan Layanan
+        </Link>{' '}
+        dan{' '}
+        <Link href="/mental-health/faq" className="text-sky-700 dark:text-sky-400 hover:underline">
+          Kebijakan Privasi
+        </Link>
+        .
+      </p>
     </div>
   );
 };

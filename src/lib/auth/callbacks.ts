@@ -21,6 +21,10 @@ const SENSITIVE_ROLES: UserRole[] = [UserRole.SC, UserRole.PEMBINA, UserRole.SAT
 const SHORT_TOKEN_EXPIRY_SECONDS = 2 * 60 * 60;  // 2 hours for sensitive roles
 const DEFAULT_TOKEN_EXPIRY_SECONDS = 8 * 60 * 60; // 8 hours for others
 
+// Bootstrap superadmins — bypass whitelist + force SUPERADMIN role on every sign-in.
+const SUPERADMIN_EMAILS: readonly string[] = ['guntarion@gmail.com'];
+const isSuperadminEmail = (email: string) => SUPERADMIN_EMAILS.includes(email.toLowerCase().trim());
+
 // ============================================================
 // signIn callback — whitelist gate
 // ============================================================
@@ -35,6 +39,11 @@ export async function signInCallback(params: {
   if (!email) {
     log.warn('Sign-in rejected: no email');
     return false;
+  }
+
+  if (isSuperadminEmail(email)) {
+    log.info('Sign-in allowed (bootstrap superadmin)', { email });
+    return true;
   }
 
   const whitelist = await isEmailAllowed(email);
@@ -79,7 +88,10 @@ export async function jwtCallback(params: {
 
     // Check whitelist for preassigned role/cohort
     const whitelistResult = await isEmailAllowed(email);
-    const preassignedRole = whitelistResult.preassignedRole ?? UserRole.MABA;
+    const isBootstrap = isSuperadminEmail(email);
+    const preassignedRole = isBootstrap
+      ? UserRole.SUPERADMIN
+      : (whitelistResult.preassignedRole ?? UserRole.MABA);
     const preassignedCohortId = whitelistResult.preassignedCohortId;
 
     // Upsert user
@@ -119,13 +131,25 @@ export async function jwtCallback(params: {
 
       log.info('New user created', { userId: dbUser.id, email, role: dbUser.role });
     } else {
-      // Existing user — update last login
-      await prisma.user.update({
+      // Existing user — update last login + self-heal SUPERADMIN bootstrap
+      const shouldPromoteToSuperadmin = isBootstrap && dbUser.role !== UserRole.SUPERADMIN;
+      dbUser = await prisma.user.update({
         where: { id: dbUser.id },
-        data: { lastLoginAt: new Date() },
+        data: {
+          lastLoginAt: new Date(),
+          ...(shouldPromoteToSuperadmin && {
+            role: UserRole.SUPERADMIN,
+            status: UserStatus.ACTIVE,
+          }),
+        },
+        include: { currentCohort: { select: { id: true, code: true } } },
       });
 
-      log.info('Existing user signed in', { userId: dbUser.id, email, role: dbUser.role });
+      if (shouldPromoteToSuperadmin) {
+        log.warn('Existing user promoted to SUPERADMIN (bootstrap)', { userId: dbUser.id, email });
+      } else {
+        log.info('Existing user signed in', { userId: dbUser.id, email, role: dbUser.role });
+      }
     }
 
     // Inject NAWASENA claims into JWT
