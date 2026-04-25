@@ -154,9 +154,9 @@ export async function generateTriwulanReview(
     withTimeout(generateRedflagSnapshot(cohortId, quarterStart, quarterEnd), 'redFlags'),
     withTimeout(generateIncidentSnapshot(cohortId, quarterStart, quarterEnd), 'incidents'),
     withTimeout(generateAnonSnapshot(cohortId, quarterStart, quarterEnd), 'anonReports'),
-    withTimeout(generatePaktaSnapshot(cohortId, quarterStart, quarterEnd), 'compliance.paktaSigningRate'),
-    withTimeout(generateComplianceSnapshot(cohortId, quarterStart, quarterEnd), 'compliance'),
-    withTimeout(generateCohortHealthSnapshot(cohortId, quarterStart, quarterEnd), 'cohortHealth'),
+    withTimeout(generatePaktaSnapshot(cohortId), 'compliance.paktaSigningRate'),
+    withTimeout(generateComplianceSnapshot(cohortId), 'compliance'),
+    withTimeout(generateCohortHealthSnapshot(cohortId), 'cohortHealth'),
     withTimeout(generateForbiddenActsSnapshot(cohortId, quarterStart, quarterEnd), 'forbiddenActs'),
   ]);
 

@@ -92,7 +92,6 @@ export async function rescheduleInstance(
           reason: reason ?? '',
         },
         instanceId,
-        organizationId,
       );
     }
   } catch (err) {

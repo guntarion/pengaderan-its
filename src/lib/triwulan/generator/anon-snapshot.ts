@@ -8,7 +8,7 @@
 
 import { prisma } from '@/utils/prisma';
 import { createLogger } from '@/lib/logger';
-import { AnonCategory, AnonSeverity, AnonStatus } from '@prisma/client';
+import { AnonSeverity, AnonStatus } from '@prisma/client';
 
 const log = createLogger('m14/generator/anon-snapshot');
 

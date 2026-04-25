@@ -109,12 +109,11 @@ export function ProgressOverviewCard({ progress, isLoading }: ProgressOverviewCa
 function StatItem({
   label,
   value,
-  total,
   color,
 }: {
   label: string;
   value: number;
-  total: number;
+  total?: number;
   color: 'emerald' | 'amber' | 'red' | 'gray';
 }) {
   const colorMap = {

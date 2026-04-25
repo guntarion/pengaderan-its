@@ -7,14 +7,13 @@
  * Returns only ACTIVE cohorts with minimal display info.
  */
 
-import { NextRequest } from 'next/server';
 import { prisma } from '@/utils/prisma';
 import { ApiResponse } from '@/lib/api/response';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('cohorts-public');
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     log.info('Fetching public cohort list for anon form');
 

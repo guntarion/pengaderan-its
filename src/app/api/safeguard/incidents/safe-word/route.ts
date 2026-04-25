@@ -9,7 +9,6 @@
 import {
   createApiHandler,
   ApiResponse,
-  BadRequestError,
   validateBody,
 } from '@/lib/api';
 import { UserRole, IncidentType, IncidentSeverity } from '@prisma/client';

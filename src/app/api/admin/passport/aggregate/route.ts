@@ -21,7 +21,7 @@ const querySchema = z.object({
 
 export const GET = createApiHandler({
   roles: ['SC', 'SUPERADMIN'],
-  handler: async (req, { user, log }) => {
+  handler: async (req, { log }) => {
     const query = validateQuery(req, querySchema);
 
     // Validate cohort exists

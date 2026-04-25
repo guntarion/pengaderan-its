@@ -39,7 +39,7 @@ export const POST = createApiHandler({
     let journal;
     try {
       journal = await getJournalForKPReview(body.journalId, user.id, user.organizationId);
-    } catch (err) {
+    } catch {
       throw ForbiddenError();
     }
 

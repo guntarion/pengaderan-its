@@ -245,7 +245,7 @@ export interface OverrideInput {
  * SC override an entry's status.
  */
 export async function override(input: OverrideInput): Promise<void> {
-  const { entryId, scUserId, newStatus, reason, clientIdempotencyKey, request } = input;
+  const { entryId, scUserId, newStatus, reason, request } = input;
 
   if (reason.length < 20) throw new Error('Override reason must be at least 20 characters');
 

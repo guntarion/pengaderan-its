@@ -5,7 +5,7 @@
  * SC/OC/SUPERADMIN — detail KP Group + daftar anggota.
  */
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,7 +57,7 @@ export default function KPGroupDetailPage({ params }: { params: Promise<{ id: st
   const [addingMember, setAddingMember] = useState(false);
   const [newMemberUserId, setNewMemberUserId] = useState('');
 
-  async function fetchGroup() {
+  const fetchGroup = useCallback(async () => {
     try {
       log.info('Fetching KP group detail', { id });
       const res = await fetch(`/api/admin/struktur/kp-groups/${id}`);
@@ -73,9 +73,9 @@ export default function KPGroupDetailPage({ params }: { params: Promise<{ id: st
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
-  useEffect(() => { fetchGroup(); }, [id]);
+  useEffect(() => { fetchGroup(); }, [fetchGroup]);
 
   async function handleArchive() {
     const confirmed = await confirm({

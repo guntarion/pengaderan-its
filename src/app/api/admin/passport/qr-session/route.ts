@@ -62,7 +62,7 @@ export const POST = createApiHandler({
 
 export const GET = createApiHandler({
   roles: ['SC', 'SUPERADMIN'],
-  handler: async (req, { user, log }) => {
+  handler: async (req, { user }) => {
     const fullUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: { organizationId: true },

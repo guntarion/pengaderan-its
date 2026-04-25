@@ -7,7 +7,6 @@ import {
   createApiHandler,
   ApiResponse,
   NotFoundError,
-  ForbiddenError,
   validateBody,
 } from '@/lib/api';
 import { UserRole } from '@prisma/client';

@@ -6,7 +6,7 @@
  * Supports days=7, 14, 30.
  */
 
-import { createApiHandler, ApiResponse, validateQuery, BadRequestError } from '@/lib/api';
+import { createApiHandler, ApiResponse, validateQuery } from '@/lib/api';
 import { z } from 'zod';
 import { getOwnTrend } from '@/lib/pulse/service';
 

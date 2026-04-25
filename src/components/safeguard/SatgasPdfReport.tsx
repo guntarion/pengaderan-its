@@ -14,7 +14,6 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
 } from '@react-pdf/renderer';
 
 // ---- Data types ----

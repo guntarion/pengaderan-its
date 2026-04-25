@@ -9,7 +9,6 @@ import {
   validateParams,
   validateBody,
   idParamSchema,
-  BadRequestError,
 } from '@/lib/api';
 import { reject } from '@/lib/passport/verifier.service';
 import { z } from 'zod';

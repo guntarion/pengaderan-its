@@ -78,13 +78,12 @@ export interface IssueUploadUrlResult {
  */
 export async function issueUploadUrl({
   userId,
-  cohortId,
   orgId,
   entryId,
   filename,
   mime,
   size,
-}: IssueUploadUrlParams): Promise<IssueUploadUrlResult> {
+}: Omit<IssueUploadUrlParams, 'cohortId'>): Promise<IssueUploadUrlResult> {
   // Validate mime type
   if (!MIME_ALLOWLIST.includes(mime)) {
     const err = BadRequestError(`Tipe file tidak diizinkan. Gunakan: ${MIME_ALLOWLIST.join(', ')}`);

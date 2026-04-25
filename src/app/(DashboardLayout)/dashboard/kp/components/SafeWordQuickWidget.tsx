@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { AlertOctagon, ExternalLink } from 'lucide-react';
+import { AlertOctagon } from 'lucide-react';
 import { SafeWordConfirmModal } from '@/components/safeguard/SafeWordConfirmModal';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';

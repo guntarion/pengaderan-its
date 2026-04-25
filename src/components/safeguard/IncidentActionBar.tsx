@@ -208,7 +208,6 @@ export function IncidentActionBar({
   incidentId,
   status,
   reportedById,
-  claimedById,
   createdAt,
   viewerId,
   viewerRole,

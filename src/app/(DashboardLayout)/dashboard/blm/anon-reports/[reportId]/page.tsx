@@ -14,7 +14,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';
 import { AnonSeverity, AnonStatus, AnonCategory } from '@prisma/client';
-import { CheckCircle2, ShieldAlert, X } from 'lucide-react';
+import { CheckCircle2, ShieldAlert } from 'lucide-react';
 
 const log = createLogger('blm-anon-report-detail');
 

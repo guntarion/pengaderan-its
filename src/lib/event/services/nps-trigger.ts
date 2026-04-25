@@ -108,7 +108,7 @@ export async function triggerNPSForInstance(instanceId: string): Promise<Trigger
     const batch = hadirUserIds.slice(i, i + BATCH_SIZE);
 
     const results = await Promise.allSettled(
-      batch.map((userId) => sendNPSNotification(userId, instanceId, scheduleAt)),
+      batch.map((userId) => sendNPSNotification(userId, instanceId)),
     );
 
     for (const result of results) {
@@ -184,7 +184,6 @@ export async function cancelNPSTrigger(instanceId: string): Promise<void> {
 async function sendNPSNotification(
   userId: string,
   instanceId: string,
-  _scheduleAt: Date,
 ): Promise<void> {
   // Import M15 sendNotification dynamically to avoid circular deps
   const { sendNotification } = await import('@/lib/notifications/send');

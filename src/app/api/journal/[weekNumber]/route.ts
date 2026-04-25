@@ -5,7 +5,7 @@
  * GET /api/journal/[weekNumber]?cohortId=... — Returns submitted journal or draft.
  */
 
-import { createApiHandler, ApiResponse, validateQuery, validateParams, NotFoundError, BadRequestError } from '@/lib/api';
+import { createApiHandler, ApiResponse, validateQuery, validateParams } from '@/lib/api';
 import { z } from 'zod';
 import { getJournalByWeek } from '@/lib/journal/service';
 

@@ -19,7 +19,7 @@
  */
 
 import { useState, useRef } from 'react';
-import { Paperclip, Upload, Download, FileText, Image, Loader2, X } from 'lucide-react';
+import { Paperclip, Upload, Download, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';
 
@@ -44,7 +44,7 @@ export interface IncidentAttachmentListProps {
 function mimeIcon(key: string) {
   const lower = key.toLowerCase();
   if (lower.endsWith('.pdf')) return <FileText className="h-4 w-4 text-red-400" />;
-  if (lower.match(/\.(jpg|jpeg|png|webp)$/)) return <Image className="h-4 w-4 text-sky-400" />;
+  if (lower.match(/\.(jpg|jpeg|png|webp)$/)) return <ImageIcon className="h-4 w-4 text-sky-400" />;
   return <Paperclip className="h-4 w-4 text-gray-400" />;
 }
 

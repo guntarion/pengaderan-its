@@ -23,7 +23,7 @@ describe('MEASURE_METHOD_REGISTRY', () => {
   });
 
   it('should have all handlers be async functions', () => {
-    for (const [key, fn] of Object.entries(MEASURE_METHOD_REGISTRY)) {
+    for (const [, fn] of Object.entries(MEASURE_METHOD_REGISTRY)) {
       expect(typeof fn).toBe('function');
       // Verify it returns a promise-like by checking constructor name
       const result = fn('test-cohort');

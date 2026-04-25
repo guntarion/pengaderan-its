@@ -13,7 +13,6 @@ import { prisma } from '@/utils/prisma';
 import { createLogger } from '@/lib/logger';
 import { countTotalWords, meetsMinimumWordCount } from './word-count';
 import { getWeekDates } from './week-number';
-import { getLocalDateString } from '@/lib/pulse/local-date';
 
 const log = createLogger('journal-service');
 

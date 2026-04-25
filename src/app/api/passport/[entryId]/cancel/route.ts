@@ -9,7 +9,6 @@ import {
   validateParams,
   validateBody,
   idParamSchema,
-  ForbiddenError,
 } from '@/lib/api';
 import { cancelPassportEntry } from '@/lib/passport/submit.service';
 import { z } from 'zod';

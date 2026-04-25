@@ -83,10 +83,10 @@ export interface PublicAnonContext<T> {
  */
 export function createPublicAnonHandler<T>(
   config: PublicAnonHandlerConfig<T>,
-): (request: NextRequest, routeContext?: { params: Promise<Record<string, string>> }) => Promise<NextResponse> {
+): (request: NextRequest, routeContext: { params: Promise<Record<string, string>> }) => Promise<NextResponse> {
   return async (
     request: NextRequest,
-    routeContext?: { params: Promise<Record<string, string>> },
+    routeContext: { params: Promise<Record<string, string>> },
   ): Promise<NextResponse> => {
     const requestId = crypto.randomUUID().slice(0, 8);
     const method = request.method;
@@ -100,11 +100,8 @@ export function createPublicAnonHandler<T>(
 
     try {
       // Resolve route params (Next.js 15: Promise)
-      const rawParams = routeContext?.params;
-      const params: Record<string, string> = rawParams
-        ? rawParams instanceof Promise
-          ? await rawParams
-          : (rawParams as unknown as Record<string, string>)
+      const params: Record<string, string> = routeContext?.params
+        ? await routeContext.params
         : {};
 
       // Step 1: Compute fingerprint (hash only, never raw IP)

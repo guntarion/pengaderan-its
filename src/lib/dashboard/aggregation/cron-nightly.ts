@@ -10,7 +10,6 @@ import { prisma } from '@/utils/prisma';
 import { createLogger } from '@/lib/logger';
 import { computeAllKPIsForCohort, KPIComputeSummary } from './kpi-compute';
 import { computeKirkpatrickSnapshot } from './kirkpatrick';
-import { KPIPeriod, KPISignalSource } from '@prisma/client';
 
 const log = createLogger('m13/cron-nightly');
 
@@ -63,24 +62,6 @@ export async function runNightlyAggregation(): Promise<NightlyRunResult> {
 
       // Run Kirkpatrick snapshot + write to KPISignal
       const kirkSnapshot = await computeKirkpatrickSnapshot(cohort.id, cohort.organizationId);
-
-      // Write Kirkpatrick as KPISignal entries (special kpiDefId = 'KIRKPATRICK_L{n}')
-      // These are synthetic KPI signals for the Kirkpatrick levels
-      const kirkKpis = kirkSnapshot.levels.map((level) => ({
-        organizationId: cohort.organizationId,
-        cohortId: cohort.id,
-        kpiDefId: `KIRKPATRICK_L${level.level}`, // synthetic ID — not a real KPIDef
-        value: level.value ?? 0,
-        valueText: `${level.label}: ${level.value ?? 'N/A'}`,
-        period: KPIPeriod.MONTHLY,
-        source: KPISignalSource.AUTO,
-        metadata: JSON.parse(JSON.stringify({
-          partial: level.partial,
-          partialReason: level.partialReason,
-          trend30d: level.trend30d,
-          target: level.target,
-        })),
-      }));
 
       // Only write Kirkpatrick signals for real KPIDefs — skip synthetic ones
       // (Kirkpatrick is stored in the KPI signal table via its own aggregation pathway)

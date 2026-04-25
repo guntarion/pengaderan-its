@@ -43,7 +43,6 @@ export const POST = createApiHandler({
 
     const result = await issueUploadUrl({
       userId: user.id,
-      cohortId: userRecord.currentCohortId,
       orgId: userRecord.organizationId,
       entryId: data.entryId,
       filename: data.filename,

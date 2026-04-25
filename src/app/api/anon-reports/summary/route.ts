@@ -10,7 +10,7 @@
 
 import { prisma } from '@/utils/prisma';
 import { createApiHandler, ApiResponse, validateQuery } from '@/lib/api';
-import { withCache, CACHE_KEYS, CACHE_TTL } from '@/lib/cache';
+import { withCache, CACHE_TTL } from '@/lib/cache';
 import { setAnonSessionVars } from '@/lib/anon-report/rls-helpers';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';

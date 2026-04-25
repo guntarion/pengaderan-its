@@ -8,7 +8,7 @@
  *   Alert cache:       dashboard:alerts:{cohortId}             TTL 60s
  */
 
-import { withCache, invalidateCache, CACHE_TTL } from '@/lib/cache';
+import { withCache, invalidateCache } from '@/lib/cache';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('m13/dashboard-cache');

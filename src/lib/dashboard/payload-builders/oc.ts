@@ -14,7 +14,6 @@ const log = createLogger('m13/payload-builder/oc');
 export async function buildOCDashboard(
   userId: string,
   cohortId: string,
-  _organizationId: string,
 ): Promise<OCDashboardPayload> {
   const start = Date.now();
   const now = new Date();

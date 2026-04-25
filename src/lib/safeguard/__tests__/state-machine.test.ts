@@ -11,7 +11,7 @@ import {
   type IncidentForTransition,
 } from '../state-machine';
 import { IncidentStatus, UserRole } from '@prisma/client';
-import type { IncidentActor, TransitionPayload } from '../types';
+import type { IncidentActor } from '../types';
 
 // ---- Helpers ----
 

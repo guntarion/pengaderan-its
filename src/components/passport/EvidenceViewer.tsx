@@ -11,15 +11,14 @@ interface EvidenceViewerProps {
   s3Key: string;
   mimeType: string;
   signedUrl: string | null;
-  entryId: string;
   onRefreshUrl?: (s3Key: string) => Promise<string>;
+  entryId?: string;
 }
 
 export function EvidenceViewer({
   s3Key,
   mimeType,
   signedUrl: initialUrl,
-  entryId,
   onRefreshUrl,
 }: EvidenceViewerProps) {
   const [currentUrl, setCurrentUrl] = useState<string | null>(initialUrl);
@@ -33,7 +32,7 @@ export function EvidenceViewer({
       const fresh = await onRefreshUrl(s3Key);
       setCurrentUrl(fresh);
       setLastLoadTime(new Date());
-    } catch (err) {
+    } catch {
       // Silently fail — user can reload manually
     } finally {
       setIsRefreshing(false);

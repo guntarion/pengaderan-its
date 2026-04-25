@@ -131,11 +131,19 @@ describe('M12 Anonymity Invariants', () => {
 
       // Create a spy base logger
       const spyLog = {
-        info: (msg: string, meta?: Record<string, unknown>) => captured.push({ msg, meta }),
-        warn: (msg: string, meta?: Record<string, unknown>) => captured.push({ msg, meta }),
-        error: (msg: string, meta?: Record<string, unknown>) => captured.push({ msg, meta }),
-        debug: (msg: string, meta?: Record<string, unknown>) => captured.push({ msg, meta }),
-        child: (_ctx: unknown) => spyLog,
+        info: (msg: string, meta?: Record<string, unknown>) => {
+          captured.push({ msg, meta });
+        },
+        warn: (msg: string, meta?: Record<string, unknown>) => {
+          captured.push({ msg, meta });
+        },
+        error: (msg: string, meta?: Record<string, unknown>) => {
+          captured.push({ msg, meta });
+        },
+        debug: (msg: string, meta?: Record<string, unknown>) => {
+          captured.push({ msg, meta });
+        },
+        child: () => spyLog,
       };
 
       const log = createAnonRedactingLogger(spyLog as unknown as ReturnType<typeof createLogger>);
@@ -178,7 +186,7 @@ describe('M12 Anonymity Invariants', () => {
         warn: (_msg: string, meta?: Record<string, unknown>) => captured.push({ meta }),
         error: (_msg: string, meta?: Record<string, unknown>) => captured.push({ meta }),
         debug: (_msg: string, meta?: Record<string, unknown>) => captured.push({ meta }),
-        child: (_ctx: unknown) => spyLog,
+        child: () => spyLog,
       };
 
       const log = createAnonRedactingLogger(spyLog as unknown as ReturnType<typeof createLogger>);

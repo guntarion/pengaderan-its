@@ -7,7 +7,6 @@ import {
   createApiHandler,
   ApiResponse,
   NotFoundError,
-  ForbiddenError,
   ConflictError,
   BadRequestError,
   validateBody,

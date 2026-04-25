@@ -7,7 +7,7 @@
  */
 
 import { prisma } from '@/utils/prisma';
-import { createApiHandler, ApiResponse, validateBody, ConflictError, BadRequestError } from '@/lib/api';
+import { createApiHandler, ApiResponse, validateBody, BadRequestError } from '@/lib/api';
 import { z } from 'zod';
 import { createPulse, getTodayPulse, getOrgTimezoneByOrgId } from '@/lib/pulse/service';
 import { invalidateAggregateCache } from '@/lib/mood-aggregate/service';

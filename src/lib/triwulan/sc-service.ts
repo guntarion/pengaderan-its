@@ -9,7 +9,6 @@ import { prisma } from '@/utils/prisma';
 import { createLogger } from '@/lib/logger';
 import { ReviewStatus } from '@prisma/client';
 import { canSubmit, transition } from './state-machine/transitions';
-import { hashIP } from './signature/ip-hasher';
 import { notifySubmittedWaitingPembina } from './escalation/notifier';
 
 const log = createLogger('m14/sc-service');

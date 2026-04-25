@@ -45,8 +45,6 @@ const TARGET_ROLES: UserRole[] = [
 
 export async function generatePaktaSnapshot(
   cohortId: string,
-  _quarterStart: Date,
-  _quarterEnd: Date
 ): Promise<PaktaSnapshotResult> {
   try {
     log.info('Generating pakta snapshot', { cohortId });

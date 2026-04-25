@@ -29,7 +29,6 @@ export async function batchSendNotification(
   templateKey: string,
   payload: Record<string, unknown>,
   instanceId: string,
-  _organizationId: string,
 ): Promise<BatchSendResult> {
   log.info('Starting batch notification', { templateKey, total: userIds.length });
 

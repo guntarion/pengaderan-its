@@ -5,7 +5,7 @@
  * SC/SUPERADMIN — antrian pairing request + SLA indicator.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DataTable, SortableHeader } from '@/components/shared/DataTable';
 import { type ColumnDef } from '@tanstack/react-table';
@@ -52,7 +52,7 @@ export default function PairingRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('PENDING');
 
-  async function fetchRequests() {
+  const fetchRequests = useCallback(async () => {
     try {
       log.info('Fetching pairing requests', { status: statusFilter });
       const params = new URLSearchParams({ status: statusFilter });
@@ -69,9 +69,9 @@ export default function PairingRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [statusFilter]);
 
-  useEffect(() => { fetchRequests(); }, [statusFilter]);
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
   const columns: ColumnDef<PairingRequest>[] = [
     {

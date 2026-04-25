@@ -200,7 +200,6 @@ async function handleCancelledHooks(
         'EVENT_CANCELLED',
         { instanceId, reason },
         instanceId,
-        organizationId,
       );
     }
   } catch (err) {

@@ -6,7 +6,7 @@
  * V2 will add GAD-7, V3 DASS-21.
  */
 
-import { scorePHQ9, type PHQ9Result } from './phq9';
+import { scorePHQ9 } from './phq9';
 
 export type { PHQ9Result } from './phq9';
 

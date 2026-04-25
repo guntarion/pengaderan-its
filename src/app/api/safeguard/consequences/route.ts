@@ -11,7 +11,6 @@ import {
   createApiHandler,
   ApiResponse,
   validateBody,
-  validateQuery,
 } from '@/lib/api';
 import { z } from 'zod';
 import { ConsequenceType, ConsequenceStatus } from '@prisma/client';

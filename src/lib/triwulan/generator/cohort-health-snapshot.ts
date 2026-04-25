@@ -7,7 +7,7 @@
 
 import { prisma } from '@/utils/prisma';
 import { createLogger } from '@/lib/logger';
-import { UserRole, UserStatus } from '@prisma/client';
+import { UserStatus } from '@prisma/client';
 
 const log = createLogger('m14/generator/cohort-health-snapshot');
 
@@ -33,8 +33,6 @@ export interface CohortHealthSnapshotResult {
 
 export async function generateCohortHealthSnapshot(
   cohortId: string,
-  _quarterStart: Date,
-  _quarterEnd: Date
 ): Promise<CohortHealthSnapshotResult> {
   try {
     log.info('Generating cohort health snapshot', { cohortId });

@@ -14,7 +14,6 @@ import { IncidentStatusBadge } from '@/components/safeguard/IncidentStatusBadge'
 import { SeverityLegend } from '@/components/safeguard/SeverityLegend';
 import { SkeletonCard } from '@/components/shared/skeletons';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';
 import { Plus, AlertOctagon, Clock, CheckCircle } from 'lucide-react';

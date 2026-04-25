@@ -10,7 +10,7 @@
 
 import { prisma } from '@/utils/prisma';
 import { createLogger } from '@/lib/logger';
-import { daysAgo, round2, calcTrend } from './aggregation-helpers';
+import { daysAgo, round2 } from './aggregation-helpers';
 
 const log = createLogger('m13/kirkpatrick');
 
@@ -36,7 +36,6 @@ export interface KirkpatrickSnapshot {
  */
 export async function computeL1Reaction(
   cohortId: string,
-  _period?: string,
 ): Promise<KirkpatrickLevel> {
   const start = Date.now();
   const since = daysAgo(30);
@@ -86,7 +85,6 @@ export async function computeL1Reaction(
  */
 export async function computeL2Learning(
   cohortId: string,
-  _period?: string,
 ): Promise<KirkpatrickLevel> {
   const start = Date.now();
 
@@ -132,7 +130,6 @@ export async function computeL2Learning(
  */
 export async function computeL3Behavior(
   cohortId: string,
-  _period?: string,
 ): Promise<KirkpatrickLevel> {
   const start = Date.now();
 
@@ -191,7 +188,6 @@ export async function computeL3Behavior(
 export async function computeL4Results(
   cohortId: string,
   organizationId: string,
-  _period?: string,
 ): Promise<KirkpatrickLevel> {
   const start = Date.now();
 

@@ -6,7 +6,7 @@
  * Cached in Redis (1h TTL). Shows not-checked-in list after 20:00 local.
  */
 
-import { createApiHandler, ApiResponse, validateQuery, BadRequestError, NotFoundError } from '@/lib/api';
+import { createApiHandler, ApiResponse, validateQuery, BadRequestError } from '@/lib/api';
 import { z } from 'zod';
 import { getAggregateCached, listNotCheckedIn } from '@/lib/mood-aggregate/service';
 import { resolveMabaForKP } from '@/lib/kp-group-resolver/resolve-maba-for-kp';

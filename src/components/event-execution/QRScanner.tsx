@@ -70,13 +70,6 @@ export function QRScanner({ onSuccess, onOfflineQueue }: QRScannerProps) {
     };
   }, []);
 
-  // Stop camera on unmount
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
   const stopCamera = useCallback(() => {
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
@@ -88,26 +81,72 @@ export function QRScanner({ onSuccess, onOfflineQueue }: QRScannerProps) {
     }
   }, []);
 
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
-      });
-      setCameraPermission('granted');
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+  // Stop camera on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
+
+  const processQRPayload = useCallback(
+    async (qrPayload: string) => {
+      const clientScanId = generateUUID();
+      const scannedAt = new Date().toISOString();
+
+      if (!isOnline) {
+        // Enqueue offline
+        const { enqueueStamp } = await import('@/lib/event-execution/idb/attendance-queue');
+        await enqueueStamp({
+          id: clientScanId,
+          qrPayload,
+          clientScanId,
+          scannedAt,
+          queuedAt: Date.now(),
+          attempts: 0,
+        });
+        setScanState('success');
+        onOfflineQueue?.(clientScanId);
+        toast.success('Scan tersimpan offline. Akan dikirim saat online.');
+        processingRef.current = false;
+        stopCamera();
+        return;
       }
-      setScanState('scanning');
-      startScanLoop();
-    } catch (err: unknown) {
-      if (err instanceof Error && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
-        setCameraPermission('denied');
+
+      // Online — submit directly
+      try {
+        const res = await fetch('/api/attendance/stamp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ qrPayload, clientScanId, scannedAt }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setScanState('error');
+          toast.apiError(data);
+          processingRef.current = false;
+          return;
+        }
+
+        if (data.data?.ok === false) {
+          setScanState('error');
+          toast.error(data.data.message ?? 'Gagal memproses scan.');
+          processingRef.current = false;
+          return;
+        }
+
+        setScanState('success');
+        toast.success(data.data?.message ?? 'Kehadiran berhasil dicatat!');
+        onSuccess?.(data.data?.attendanceId, data.data?.isWalkin);
+        stopCamera();
+      } catch (err) {
+        setScanState('error');
+        toast.apiError(err);
+        processingRef.current = false;
       }
-      toast.apiError(err);
-    }
-  }, []);
+    },
+    [isOnline, onSuccess, onOfflineQueue, stopCamera],
+  );
 
   const startScanLoop = useCallback(() => {
     if (!hasBarcodeDetector) return;
@@ -138,67 +177,28 @@ export function QRScanner({ onSuccess, onOfflineQueue }: QRScannerProps) {
         // Silently ignore detection errors
       }
     }, 500);
-  }, [hasBarcodeDetector]);
+  }, [hasBarcodeDetector, processQRPayload]);
 
-  const processQRPayload = useCallback(
-    async (qrPayload: string) => {
-      const clientScanId = generateUUID();
-      const scannedAt = new Date().toISOString();
-
-      if (!isOnline) {
-        // Enqueue offline
-        const { enqueueStamp } = await import('@/lib/event-execution/idb/attendance-queue');
-        await enqueueStamp({
-          id: clientScanId,
-          qrPayload,
-          clientScanId,
-          scannedAt,
-          queuedAt: Date.now(),
-          attempts: 0,
-        });
-        setScanState('success');
-        stopCamera();
-        onOfflineQueue?.(clientScanId);
-        toast.success('Scan tersimpan offline. Akan dikirim saat online.');
-        processingRef.current = false;
-        return;
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+      });
+      setCameraPermission('granted');
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
       }
-
-      // Online — submit directly
-      try {
-        const res = await fetch('/api/attendance/stamp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ qrPayload, clientScanId, scannedAt }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          setScanState('error');
-          toast.apiError(data);
-          processingRef.current = false;
-          return;
-        }
-
-        if (data.data?.ok === false) {
-          setScanState('error');
-          toast.error(data.data.message ?? 'Gagal memproses scan.');
-          processingRef.current = false;
-          return;
-        }
-
-        setScanState('success');
-        stopCamera();
-        toast.success(data.data?.message ?? 'Kehadiran berhasil dicatat!');
-        onSuccess?.(data.data?.attendanceId, data.data?.isWalkin);
-      } catch (err) {
-        setScanState('error');
-        toast.apiError(err);
-        processingRef.current = false;
+      setScanState('scanning');
+      startScanLoop();
+    } catch (err: unknown) {
+      if (err instanceof Error && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+        setCameraPermission('denied');
       }
-    },
-    [isOnline, onSuccess, onOfflineQueue, stopCamera],
-  );
+      toast.apiError(err);
+    }
+  }, [startScanLoop]);
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -13,7 +13,6 @@ import {
   validateBody,
   NotFoundError,
   BadRequestError,
-  ForbiddenError,
 } from '@/lib/api';
 import { submitPassportEntry } from '@/lib/passport/submit.service';
 import { EvidenceType } from '@prisma/client';

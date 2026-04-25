@@ -14,7 +14,6 @@ const log = createLogger('m13/payload-builder/kasuh');
 export async function buildKasuhDashboard(
   userId: string,
   cohortId: string,
-  _organizationId: string,
 ): Promise<KasuhDashboardPayload> {
   const start = Date.now();
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);

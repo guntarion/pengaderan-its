@@ -21,7 +21,6 @@ export const GET = createApiHandler({
   roles: ['SC', 'OC', 'SUPERADMIN'],
   handler: async (req, ctx) => {
     const { cohortId, status } = validateQuery(req, querySchema);
-    const user = ctx.user as { id: string; organizationId?: string };
 
     ctx.log.info('Fetching KP Groups', { cohortId, status });
 

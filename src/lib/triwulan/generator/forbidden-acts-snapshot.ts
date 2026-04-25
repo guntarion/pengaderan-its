@@ -17,14 +17,6 @@ const FORBIDDEN_ACT_TYPES: IncidentType[] = [
   IncidentType.HARASSMENT,
 ];
 
-const FORBIDDEN_ACT_KEYS = [
-  'PELECEHAN_VERBAL',
-  'PELECEHAN_SEKSUAL',
-  'KEKERASAN_FISIK',
-  'KEKERASAN_PSIKOLOGIS',
-  'PERPELONCOAN',
-] as const;
-
 export interface ForbiddenActViolation {
   actKey: string;
   count: number;
@@ -67,11 +59,6 @@ export async function generateForbiddenActsSnapshot(
     // Map to structured violations
     const harassmentCount = countMap.get(IncidentType.HARASSMENT) ?? 0;
     const totalViolations = harassmentCount;
-
-    const violations: ForbiddenActViolation[] = FORBIDDEN_ACT_KEYS.map((key) => ({
-      actKey: key,
-      count: key.includes('PELECEHAN') ? harassmentCount : 0,
-    }));
 
     // Normalize: only PELECEHAN_VERBAL gets the count for now
     const normalizedViolations: ForbiddenActViolation[] = [

@@ -12,7 +12,7 @@ import { prisma } from '@/utils/prisma';
 
 export const GET = createApiHandler({
   roles: ['OC', 'SC', 'SUPERADMIN'],
-  handler: async (req, { user, params, log }) => {
+  handler: async (req, { user, params }) => {
     const instanceId = (params as { id: string }).id;
 
     const instance = await prisma.kegiatanInstance.findFirst({

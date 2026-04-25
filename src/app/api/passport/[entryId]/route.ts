@@ -51,7 +51,7 @@ export const GET = createApiHandler({
         let signedUrl: string | null = null;
         try {
           signedUrl = await issueGetUrl({ key: upload.s3Key, ttlSeconds: 900 });
-        } catch (err) {
+        } catch {
           log.warn('Failed to generate signed URL for evidence', { s3Key: upload.s3Key });
         }
         return { ...upload, signedUrl };

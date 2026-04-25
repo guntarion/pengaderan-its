@@ -5,7 +5,7 @@
  * SC/SUPERADMIN — detail + actions (approve, reject, fulfill).
  */
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +59,7 @@ export default function PairingRequestDetailPage({ params }: { params: Promise<{
   const [showFulfillForm, setShowFulfillForm] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  async function fetchRequest() {
+  const fetchRequest = useCallback(async () => {
     try {
       log.info('Fetching pairing request detail', { id });
       // Use the queue endpoint filtered by specific request
@@ -90,9 +90,9 @@ export default function PairingRequestDetailPage({ params }: { params: Promise<{
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
-  useEffect(() => { fetchRequest(); }, [id]);
+  useEffect(() => { fetchRequest(); }, [fetchRequest]);
 
   async function handleApprove() {
     const confirmed = await confirm({

@@ -28,8 +28,6 @@ export interface ComplianceSnapshotResult {
 
 export async function generateComplianceSnapshot(
   cohortId: string,
-  _quarterStart: Date,
-  _quarterEnd: Date
 ): Promise<ComplianceSnapshotResult> {
   try {
     log.info('Generating compliance snapshot', { cohortId });

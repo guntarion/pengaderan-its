@@ -5,7 +5,7 @@
  * GET /api/journal — List all journals for the current user (Maba).
  */
 
-import { createApiHandler, ApiResponse, BadRequestError } from '@/lib/api';
+import { createApiHandler, ApiResponse } from '@/lib/api';
 import { listJournals } from '@/lib/journal/service';
 import { z } from 'zod';
 import { validateQuery } from '@/lib/api';

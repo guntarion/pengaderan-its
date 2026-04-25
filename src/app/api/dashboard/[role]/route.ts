@@ -21,7 +21,11 @@ import { buildSatgasDashboard } from '@/lib/dashboard/payload-builders/satgas';
 import { buildSCDashboard } from '@/lib/dashboard/payload-builders/sc';
 import { DASHBOARD_ROLE_MAP } from '@/lib/dashboard/drilldown';
 
-type BuilderFn = (userId: string, cohortId: string, organizationId: string) => Promise<unknown>;
+type BuilderFn2Args = (userId: string, cohortId: string) => Promise<unknown>;
+type BuilderFn3Args = (userId: string, cohortId: string, organizationId: string) => Promise<unknown>;
+type BuilderFn = BuilderFn2Args | BuilderFn3Args;
+
+const PAYLOAD_BUILDERS_2ARGS = new Set(['maba', 'oc', 'kasuh', 'kp']);
 
 const PAYLOAD_BUILDERS: Record<string, BuilderFn> = {
   maba: buildMabaDashboard,
@@ -68,7 +72,12 @@ export const GET = createApiHandler({
       role,
       user.id,
       cohortId,
-      () => builder(user.id, cohortId, organizationId),
+      () => {
+        if (PAYLOAD_BUILDERS_2ARGS.has(role)) {
+          return (builder as BuilderFn2Args)(user.id, cohortId);
+        }
+        return (builder as BuilderFn3Args)(user.id, cohortId, organizationId);
+      },
     );
 
     return ApiResponse.success(payload);

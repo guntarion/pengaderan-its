@@ -19,7 +19,6 @@ const log = createLogger('m13/payload-builder/maba');
 export async function buildMabaDashboard(
   userId: string,
   cohortId: string,
-  _organizationId: string,
 ): Promise<MabaDashboardPayload> {
   const start = Date.now();
 

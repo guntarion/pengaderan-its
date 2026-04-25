@@ -14,7 +14,7 @@ export const kpDebriefOverdueRule: RedFlagRule = {
   targetRoles: [UserRole.SC, UserRole.KP],
 
   async evaluate(ctx: RuleContext): Promise<RuleHit[]> {
-    const { cohortId, organizationId, prisma, log } = ctx;
+    const { cohortId, prisma, log } = ctx;
     const hits: RuleHit[] = [];
 
     const cutoff = new Date();

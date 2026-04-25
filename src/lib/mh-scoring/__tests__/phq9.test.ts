@@ -9,20 +9,8 @@ import { describe, it, expect } from 'vitest';
 import { scorePHQ9 } from '../phq9';
 
 // Helper: create answer array with all zeros except specified index
-function answers(total: number, item9 = 0): number[] {
-  // Create array of 9 items, distribute total across first 8 items, item9 for last
-  const arr: number[] = new Array(9).fill(0);
-  arr[8] = item9;
-
-  let remaining = total;
-  for (let i = 0; i < 8 && remaining > 0; i++) {
-    const val = Math.min(3, remaining);
-    arr[i] = val;
-    remaining -= val;
-  }
-
-  return arr;
-}
+// Note: This helper is defined but not used in the test suite.
+// It's kept for potential future test scenarios.
 
 describe('scorePHQ9 — severity classification', () => {
   it('score 0 → GREEN, no immediateContact', () => {

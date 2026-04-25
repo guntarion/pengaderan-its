@@ -56,14 +56,7 @@ function ScanPageContent() {
     return () => clearInterval(interval);
   }, [refreshPendingCount]);
 
-  // Auto-sync when coming online
-  useEffect(() => {
-    if (isOnline && pendingCount > 0) {
-      handleForceSync();
-    }
-  }, [isOnline]);
-
-  const handleForceSync = async () => {
+  const handleForceSync = useCallback(async () => {
     if (syncing) return;
     setSyncing(true);
     try {
@@ -125,7 +118,14 @@ function ScanPageContent() {
     } finally {
       setSyncing(false);
     }
-  };
+  }, [refreshPendingCount, syncing]);
+
+  // Auto-sync when coming online
+  useEffect(() => {
+    if (isOnline && pendingCount > 0) {
+      handleForceSync();
+    }
+  }, [isOnline, pendingCount, handleForceSync]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-sky-100 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950">

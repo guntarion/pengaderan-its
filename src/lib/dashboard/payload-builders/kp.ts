@@ -15,7 +15,6 @@ const log = createLogger('m13/payload-builder/kp');
 export async function buildKPDashboard(
   userId: string,
   cohortId: string,
-  _organizationId: string,
 ): Promise<KPDashboardPayload> {
   const start = Date.now();
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
