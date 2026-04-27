@@ -10,24 +10,24 @@
 // ============================================
 
 enum LifeArea {
-  PERSONAL_GROWTH  // kepribadian, karakter, kebiasaan
-  STUDI_KARIR      // akademik, karir, skill profesional
-  FINANSIAL        // literasi keuangan, menabung, target cash
-  KESEHATAN        // fisik, mental, olahraga, pola tidur
-  SOSIAL           // pertemanan, komunitas, kontribusi
-  KELUARGA         // keluarga inti, relasi romantis/pasangan
+  PERSONAL_GROWTH // kepribadian, karakter, kebiasaan
+  STUDI_KARIR // akademik, karir, skill profesional
+  FINANSIAL // literasi keuangan, menabung, target cash
+  KESEHATAN // fisik, mental, olahraga, pola tidur
+  SOSIAL // pertemanan, komunitas, kontribusi
+  KELUARGA // keluarga inti, relasi romantis/pasangan
 }
 
 enum LifeMapStatus {
-  ACTIVE    // default, goal sedang berjalan
-  ACHIEVED  // tercapai (Maba mark saat update milestone)
-  ADJUSTED  // direvisi secara material (deadline shift, goal rewritten)
+  ACTIVE // default, goal sedang berjalan
+  ACHIEVED // tercapai (Maba mark saat update milestone)
+  ADJUSTED // direvisi secara material (deadline shift, goal rewritten)
 }
 
 enum MilestoneKey {
-  M1  // awal F2
-  M2  // tengah F2
-  M3  // akhir F2
+  M1 // awal F2
+  M2 // tengah F2
+  M3 // akhir F2
 }
 
 // ============================================
@@ -35,40 +35,40 @@ enum MilestoneKey {
 // ============================================
 
 model TimeCapsuleEntry {
-  id               String   @id @default(cuid())
-  organizationId   String
-  cohortId         String
-  userId           String   // owner (role=MABA)
+  id             String @id @default(cuid())
+  organizationId String
+  cohortId       String
+  userId         String // owner (role=MABA)
 
   // Content
-  title            String?  @db.VarChar(120)  // optional title, max 120 chars
-  body             String   @db.Text          // markdown content, required, max 10000 chars
-  mood             Int?     // 1-5 scale (consistent with M04 PulseCheck.mood), nullable
+  title String? @db.VarChar(120) // optional title, max 120 chars
+  body  String  @db.Text // markdown content, required, max 10000 chars
+  mood  Int? // 1-5 scale (consistent with M04 PulseCheck.mood), nullable
 
   // Share control
-  sharedWithKasuh     Boolean  @default(false)
-  isHighlighted       Boolean  @default(false)  // nice-to-have N3, unused V1
-  isClosingReflection Boolean  @default(false)  // flag for closing F4 entry
+  sharedWithKasuh     Boolean @default(false)
+  isHighlighted       Boolean @default(false) // nice-to-have N3, unused V1
+  isClosingReflection Boolean @default(false) // flag for closing F4 entry
 
   // Publish state (null = draft, non-null = published)
-  publishedAt      DateTime?
-  editableUntil    DateTime  // = publishedAt + 24h, stored for fast query
+  publishedAt   DateTime?
+  editableUntil DateTime // = publishedAt + 24h, stored for fast query
 
   // Timestamps
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  organization     Organization            @relation(fields: [organizationId], references: [id])
-  cohort           Cohort                  @relation(fields: [cohortId], references: [id])
-  user             User                    @relation(fields: [userId], references: [id])
-  attachments      TimeCapsuleAttachment[]
+  organization Organization            @relation(fields: [organizationId], references: [id])
+  cohort       Cohort                  @relation(fields: [cohortId], references: [id])
+  user         User                    @relation(fields: [userId], references: [id])
+  attachments  TimeCapsuleAttachment[]
 
   // Indexes
-  @@index([userId, cohortId, publishedAt(sort: Desc)])  // list Maba sendiri
-  @@index([userId, cohortId, sharedWithKasuh])          // filter shared
-  @@index([organizationId, cohortId])                   // RLS + tenant scan
-  @@index([cohortId, publishedAt])                      // retention scan
+  @@index([userId, cohortId, publishedAt(sort: Desc)]) // list Maba sendiri
+  @@index([userId, cohortId, sharedWithKasuh]) // filter shared
+  @@index([organizationId, cohortId]) // RLS + tenant scan
+  @@index([cohortId, publishedAt]) // retention scan
   @@map("time_capsule_entries")
 }
 
@@ -77,33 +77,33 @@ model TimeCapsuleEntry {
 // ============================================
 
 model TimeCapsuleAttachment {
-  id               String   @id @default(cuid())
-  organizationId   String   // denormalized for RLS
-  cohortId         String   // denormalized
-  userId           String   // owner, denormalized for retention scan + RLS
+  id             String @id @default(cuid())
+  organizationId String // denormalized for RLS
+  cohortId       String // denormalized
+  userId         String // owner, denormalized for retention scan + RLS
 
   // Entry relation (null = draft upload, not yet confirmed)
-  entryId          String?
+  entryId String?
 
   // Storage
-  storageKey       String   @unique  // e.g., time-capsule/{orgId}/{userId}/{entryId}/{uuid}-{safe}
-  originalFilename String   @db.VarChar(255)
-  mimeType         String   @db.VarChar(50)  // from allowlist
-  size             Int      // bytes
+  storageKey       String @unique // e.g., time-capsule/{orgId}/{userId}/{entryId}/{uuid}-{safe}
+  originalFilename String @db.VarChar(255)
+  mimeType         String @db.VarChar(50) // from allowlist
+  size             Int // bytes
 
   // Timestamps
-  uploadedAt       DateTime @default(now())
+  uploadedAt DateTime @default(now())
 
   // Relations
-  organization     Organization      @relation(fields: [organizationId], references: [id])
-  cohort           Cohort            @relation(fields: [cohortId], references: [id])
-  user             User              @relation(fields: [userId], references: [id])
-  entry            TimeCapsuleEntry? @relation(fields: [entryId], references: [id])
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  cohort       Cohort            @relation(fields: [cohortId], references: [id])
+  user         User              @relation(fields: [userId], references: [id])
+  entry        TimeCapsuleEntry? @relation(fields: [entryId], references: [id])
 
   // Indexes
-  @@index([entryId])                             // fetch attachments for entry
-  @@index([userId, cohortId, uploadedAt])        // retention scan
-  @@index([organizationId, cohortId])            // RLS + tenant scan
+  @@index([entryId]) // fetch attachments for entry
+  @@index([userId, cohortId, uploadedAt]) // retention scan
+  @@index([organizationId, cohortId]) // RLS + tenant scan
   // Note: partial index for orphan scan (entry_id IS NULL) added via raw SQL in migration
   @@map("time_capsule_attachments")
 }
@@ -113,45 +113,45 @@ model TimeCapsuleAttachment {
 // ============================================
 
 model LifeMap {
-  id               String        @id @default(cuid())
-  organizationId   String
-  cohortId         String
-  userId           String        // owner (role=MABA)
+  id             String @id @default(cuid())
+  organizationId String
+  cohortId       String
+  userId         String // owner (role=MABA)
 
   // Goal content (SMART framework)
-  area             LifeArea
-  goalText         String        @db.Text  // 20-500 chars
-  metric           String        @db.Text  // measurable metric, 10-200 chars
-  whyMatters       String        @db.Text  // relevance/rationale, 20-300 chars
-  deadline         DateTime      // specific date target
-  achievabilityNote String?      @db.Text  // max 200 chars
+  area              LifeArea
+  goalText          String   @db.Text // 20-500 chars
+  metric            String   @db.Text // measurable metric, 10-200 chars
+  whyMatters        String   @db.Text // relevance/rationale, 20-300 chars
+  deadline          DateTime // specific date target
+  achievabilityNote String?  @db.Text // max 200 chars
 
   // Status
-  status           LifeMapStatus @default(ACTIVE)
-  sharedWithKasuh  Boolean       @default(false)
+  status          LifeMapStatus @default(ACTIVE)
+  sharedWithKasuh Boolean       @default(false)
 
   // Self-relation for ADJUSTED chain (goal revised → new goal links back)
-  previousGoalId   String?       // FK self, nullable
-  previousGoal     LifeMap?      @relation("LifeMapSuperseded", fields: [previousGoalId], references: [id])
-  nextGoals        LifeMap[]     @relation("LifeMapSuperseded")
+  previousGoalId String? // FK self, nullable
+  previousGoal   LifeMap?  @relation("LifeMapSuperseded", fields: [previousGoalId], references: [id])
+  nextGoals      LifeMap[] @relation("LifeMapSuperseded")
 
   // Timestamps
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  achievedAt       DateTime?     // set when status → ACHIEVED
-  adjustedAt       DateTime?     // set when status → ADJUSTED
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  achievedAt DateTime? // set when status → ACHIEVED
+  adjustedAt DateTime? // set when status → ADJUSTED
 
   // Relations
-  organization     Organization  @relation(fields: [organizationId], references: [id])
-  cohort           Cohort        @relation(fields: [cohortId], references: [id])
-  user             User          @relation(fields: [userId], references: [id])
-  updates          LifeMapUpdate[]
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  cohort       Cohort          @relation(fields: [cohortId], references: [id])
+  user         User            @relation(fields: [userId], references: [id])
+  updates      LifeMapUpdate[]
 
   // Indexes
-  @@index([userId, cohortId, area, status])  // overview per area
-  @@index([userId, cohortId, status])        // list by status
-  @@index([organizationId, cohortId])        // RLS + tenant scan
-  @@index([cohortId, status])                // cron + milestone reminder scan
+  @@index([userId, cohortId, area, status]) // overview per area
+  @@index([userId, cohortId, status]) // list by status
+  @@index([organizationId, cohortId]) // RLS + tenant scan
+  @@index([cohortId, status]) // cron + milestone reminder scan
   @@map("life_maps")
 }
 
@@ -160,45 +160,44 @@ model LifeMap {
 // ============================================
 
 model LifeMapUpdate {
-  id               String        @id @default(cuid())
-  organizationId   String        // denormalized
-  cohortId         String        // denormalized
-  userId           String        // denormalized owner
+  id             String @id @default(cuid())
+  organizationId String // denormalized
+  cohortId       String // denormalized
+  userId         String // denormalized owner
 
   // Parent goal
-  lifeMapId        String
-  milestone        MilestoneKey
+  lifeMapId String
+  milestone MilestoneKey
 
   // Progress content
-  progressText     String        @db.Text  // 50-1000 chars
-  progressPercent  Int           // 0-100
-  reflectionText   String        @db.Text  // 50-1000 chars
+  progressText    String @db.Text // 50-1000 chars
+  progressPercent Int // 0-100
+  reflectionText  String @db.Text // 50-1000 chars
 
   // Status change (optional — if filled, updates parent LifeMap.status)
-  newStatus        LifeMapStatus?
+  newStatus LifeMapStatus?
 
   // Late submission tracking
-  isLate           Boolean       @default(false)  // true if submitted after window close
+  isLate Boolean @default(false) // true if submitted after window close
 
   // Edit window (7 days post-submit)
-  editableUntil    DateTime      // = recordedAt + 7d, stored for fast query
+  editableUntil DateTime // = recordedAt + 7d, stored for fast query
 
   // Timestamps
-  recordedAt       DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  recordedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
-  organization     Organization  @relation(fields: [organizationId], references: [id])
-  cohort           Cohort        @relation(fields: [cohortId], references: [id])
-  user             User          @relation(fields: [userId], references: [id])
-  lifeMap          LifeMap       @relation(fields: [lifeMapId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  cohort       Cohort       @relation(fields: [cohortId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  lifeMap      LifeMap      @relation(fields: [lifeMapId], references: [id])
 
   // Unique constraint: one update per milestone per goal
   @@unique([lifeMapId, milestone])
-
   // Indexes
-  @@index([userId, cohortId, milestone])   // query list per Maba per M-key
-  @@index([lifeMapId])                     // fetch updates for goal
-  @@index([organizationId, cohortId])      // RLS + tenant scan
+  @@index([userId, cohortId, milestone]) // query list per Maba per M-key
+  @@index([lifeMapId]) // fetch updates for goal
+  @@index([organizationId, cohortId]) // RLS + tenant scan
   @@map("life_map_updates")
 }

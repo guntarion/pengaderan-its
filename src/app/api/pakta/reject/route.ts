@@ -59,7 +59,13 @@ export const POST = createApiHandler({
       select: { id: true, organizationId: true },
     });
 
-    if (!userRecord || userRecord.organizationId !== paktaVersion.organizationId) {
+    // DIGITAL pakta (organizationId IS NULL) is institusi-wide — any org's user can reject
+    // ETIK pakta (organizationId NOT NULL) is org-scoped — only same-org users
+    if (
+      !userRecord ||
+      (paktaVersion.organizationId !== null &&
+        userRecord.organizationId !== paktaVersion.organizationId)
+    ) {
       throw BadRequestError('Anda tidak berhak menolak pakta ini');
     }
 
@@ -67,9 +73,11 @@ export const POST = createApiHandler({
 
     await prisma.$transaction(async (tx) => {
       // Create rejection record
+      // PaktaRejection.organizationId is always the rejector's org (NOT NULL)
+      // even for DIGITAL pakta (where PaktaVersion.organizationId IS NULL)
       await tx.paktaRejection.create({
         data: {
-          organizationId: paktaVersion.organizationId,
+          organizationId: userRecord.organizationId,
           userId: user.id,
           paktaVersionId: versionId,
           type: paktaVersion.type,

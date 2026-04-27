@@ -81,7 +81,12 @@ export const POST = createApiHandler({
       throw NotFoundError('User');
     }
 
-    if (userRecord.organizationId !== paktaVersion.organizationId) {
+    // DIGITAL pakta (organizationId IS NULL) is institusi-wide — any org's user can sign
+    // ETIK pakta (organizationId NOT NULL) is org-scoped — only same-org users can sign
+    if (
+      paktaVersion.organizationId !== null &&
+      userRecord.organizationId !== paktaVersion.organizationId
+    ) {
       throw BadRequestError('Anda tidak berhak menandatangani pakta ini');
     }
 
@@ -104,9 +109,11 @@ export const POST = createApiHandler({
 
     await prisma.$transaction(async (tx) => {
       // Create signature
+      // PaktaSignature.organizationId is always the signer's org (NOT NULL)
+      // even for DIGITAL pakta (where PaktaVersion.organizationId IS NULL)
       await tx.paktaSignature.create({
         data: {
-          organizationId: paktaVersion.organizationId,
+          organizationId: userRecord.organizationId,
           userId: user.id,
           paktaVersionId: versionId,
           type: paktaVersion.type,

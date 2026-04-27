@@ -58,25 +58,24 @@ model KPISignal {
   id             String          @id @default(cuid())
   organizationId String
   cohortId       String
-  kpiDefId       String          // FK → KPIDef (M02)
-  value          Float           // numeric value (rate, count, avg)
-  valueText      String?         // optional text for non-numeric KPI
-  metadata       Json?           // supplementary data (breakdown, trend)
+  kpiDefId       String // FK → KPIDef (M02)
+  value          Float // numeric value (rate, count, avg)
+  valueText      String? // optional text for non-numeric KPI
+  metadata       Json? // supplementary data (breakdown, trend)
   source         KPISignalSource @default(AUTO)
   period         KPIPeriod
   computedAt     DateTime        @default(now())
-  computedBy     String?         // userId for MANUAL source; null = cron
+  computedBy     String? // userId for MANUAL source; null = cron
 
   // Relations
-  organization   Organization @relation("KPISignalOrg", fields: [organizationId], references: [id])
-  cohort         Cohort       @relation("KPISignalCohort", fields: [cohortId], references: [id])
-  kpiDef         KPIDef       @relation(fields: [kpiDefId], references: [id])
+  organization Organization @relation("KPISignalOrg", fields: [organizationId], references: [id])
+  cohort       Cohort       @relation("KPISignalCohort", fields: [cohortId], references: [id])
+  kpiDef       KPIDef       @relation(fields: [kpiDefId], references: [id])
 
   // Hot read index: "show latest KPI X for cohort C"
   @@index([cohortId, kpiDefId, period, computedAt(sort: Desc)], name: "kpi_signal_hot_read")
   // Audit + retention cleanup
   @@index([organizationId, computedAt], name: "kpi_signal_org_cleanup")
-
   @@map("kpi_signals")
 }
 
@@ -93,20 +92,20 @@ model RedFlagAlert {
   status         AlertStatus     @default(ACTIVE)
 
   // Target (nullable = cohort-level alert)
-  targetUserId   String?
-  targetRoles    UserRole[]      // which dashboard roles see this alert
-  targetUrl      String          // pre-computed drill-down URL
+  targetUserId String?
+  targetRoles  UserRole[] // which dashboard roles see this alert
+  targetUrl    String // pre-computed drill-down URL
 
   // Display
-  title          String          // shown in alert panel
-  description    String?         // optional expanded text
+  title       String // shown in alert panel
+  description String? // optional expanded text
 
   // Rule-specific data
-  metadata       Json?           // consecutive days, score, etc.
+  metadata Json? // consecutive days, score, etc.
 
   // Lifecycle timestamps
-  computedAt      DateTime        @default(now())
-  firstSeenAt     DateTime        @default(now())  // immutable: first rule fire
+  computedAt       DateTime  @default(now())
+  firstSeenAt      DateTime  @default(now()) // immutable: first rule fire
   acknowledgedById String?
   acknowledgedAt   DateTime?
   dismissedById    String?
@@ -128,6 +127,5 @@ model RedFlagAlert {
   @@index([targetUserId, status], name: "alert_target_user")
   // Retention cleanup
   @@index([organizationId, computedAt], name: "alert_org_cleanup")
-
   @@map("red_flag_alerts")
 }

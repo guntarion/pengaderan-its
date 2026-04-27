@@ -16,51 +16,51 @@
 // ============================================
 
 enum MHInstrument {
-  PHQ9   // Depression screening 9-item (V1)
-  GAD7   // Anxiety screening 7-item (V2)
+  PHQ9 // Depression screening 9-item (V1)
+  GAD7 // Anxiety screening 7-item (V2)
   DASS21 // Depression/Anxiety/Stress 21-item short (V3)
 }
 
 enum MHSeverity {
-  GREEN  // Minimal/none — no referral
+  GREEN // Minimal/none — no referral
   YELLOW // Mild/moderate — flagged for monitoring, no auto-referral
-  RED    // Severe — auto-referral SAC
+  RED // Severe — auto-referral SAC
 }
 
 enum MHScreeningPhase {
-  F1             // Minggu 2 cohort (default screening)
-  F4             // Re-screen akhir cohort
+  F1 // Minggu 2 cohort (default screening)
+  F4 // Re-screen akhir cohort
   SELF_TRIGGERED // Maba klik "Cek kondisi saya" (V2)
 }
 
 enum MHReferralStatus {
-  PENDING     // Created, waiting SAC pickup
+  PENDING // Created, waiting SAC pickup
   IN_PROGRESS // SAC acknowledged, active follow-up
-  RESOLVED    // Case closed with resolution note
-  REASSIGNED  // Transferred to another SAC (history preserved)
-  TAKEN_OVER  // Coordinator takes over after escalation
-  CANCELLED   // Maba withdrawal & deletion (rare)
+  RESOLVED // Case closed with resolution note
+  REASSIGNED // Transferred to another SAC (history preserved)
+  TAKEN_OVER // Coordinator takes over after escalation
+  CANCELLED // Maba withdrawal & deletion (rare)
 }
 
 enum MHAccessAction {
-  READ_META          // View metadata (cohort, phase, severity) without decrypt
-  DECRYPT_SCORE      // Decrypt rawScoreEncrypted
-  DECRYPT_ANSWERS    // Decrypt per-item answers
-  DECRYPT_NOTE       // Decrypt SAC note
-  STATUS_CHANGE      // Referral status transition
-  EXPORT_AGGREGATE   // CSV export aggregate
-  BYPASS_RLS         // Admin bypass for maintenance
-  CONSENT_RECORDED   // Maba consent submit
-  CONSENT_WITHDRAWN  // Maba withdraw consent
-  DATA_DELETED       // Retention delete or user-request delete
-  KEY_ROTATED        // Admin re-encrypt with new key
-  AUDIT_REVIEW       // Superadmin reviewing audit log itself
+  READ_META // View metadata (cohort, phase, severity) without decrypt
+  DECRYPT_SCORE // Decrypt rawScoreEncrypted
+  DECRYPT_ANSWERS // Decrypt per-item answers
+  DECRYPT_NOTE // Decrypt SAC note
+  STATUS_CHANGE // Referral status transition
+  EXPORT_AGGREGATE // CSV export aggregate
+  BYPASS_RLS // Admin bypass for maintenance
+  CONSENT_RECORDED // Maba consent submit
+  CONSENT_WITHDRAWN // Maba withdraw consent
+  DATA_DELETED // Retention delete or user-request delete
+  KEY_ROTATED // Admin re-encrypt with new key
+  AUDIT_REVIEW // Superadmin reviewing audit log itself
 }
 
 enum MHConsentStatus {
-  GRANTED          // Active consent
-  WITHDRAWN        // Withdrawn (data pending deletion)
-  EXPIRED_VERSION  // Consent text version bumped, re-consent needed
+  GRANTED // Active consent
+  WITHDRAWN // Withdrawn (data pending deletion)
+  EXPIRED_VERSION // Consent text version bumped, re-consent needed
 }
 
 // ============================================
@@ -68,36 +68,36 @@ enum MHConsentStatus {
 // ============================================
 
 model MHScreening {
-  id                   String            @id @default(cuid())
-  userId               String
-  cohortId             String
-  organizationId       String
-  kpGroupId            String?           // snapshot at submit time, nullable if not yet assigned
+  id             String  @id @default(cuid())
+  userId         String
+  cohortId       String
+  organizationId String
+  kpGroupId      String? // snapshot at submit time, nullable if not yet assigned
 
-  instrument           MHInstrument
-  phase                MHScreeningPhase
+  instrument MHInstrument
+  phase      MHScreeningPhase
 
   // Encrypted via pgcrypto — plain bytes in Postgres, decrypted only via helper
-  rawScoreEncrypted    Bytes
+  rawScoreEncrypted Bytes
 
   // Plain fields for RLS decision + aggregate (no PII in these fields)
-  severity             MHSeverity
-  flagged              Boolean           @default(false) // borderline YELLOW or special item
-  immediateContact     Boolean           @default(false) // PHQ-9 item #9 > 0 → SLA 24h
+  severity         MHSeverity
+  flagged          Boolean    @default(false) // borderline YELLOW or special item
+  immediateContact Boolean    @default(false) // PHQ-9 item #9 > 0 → SLA 24h
 
-  encryptionKeyVersion Int               @default(1)     // track key rotation
+  encryptionKeyVersion Int    @default(1) // track key rotation
   consentId            String
 
-  recordedAt           DateTime          @default(now())
-  deletedAt            DateTime?         // soft-delete marker; retention cron hard-deletes after 30d
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  recordedAt DateTime  @default(now())
+  deletedAt  DateTime? // soft-delete marker; retention cron hard-deletes after 30d
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relations
-  user         User              @relation(fields: [userId], references: [id])
-  cohort       Cohort            @relation(fields: [cohortId], references: [id])
-  organization Organization      @relation(fields: [organizationId], references: [id])
-  consent      MHConsentRecord   @relation(fields: [consentId], references: [id])
+  user         User                @relation(fields: [userId], references: [id])
+  cohort       Cohort              @relation(fields: [cohortId], references: [id])
+  organization Organization        @relation(fields: [organizationId], references: [id])
+  consent      MHConsentRecord     @relation(fields: [consentId], references: [id])
   answers      MHScreeningAnswer[]
   referral     MHReferralLog?
 
@@ -115,12 +115,12 @@ model MHScreening {
 // ============================================
 
 model MHScreeningAnswer {
-  id                      String      @id @default(cuid())
-  screeningId             String
-  questionIndex           Int         // 0-based (0-8 for PHQ-9)
-  answerValueEncrypted    Bytes       // pgcrypto encrypt of "0"|"1"|"2"|"3"
-  encryptionKeyVersion    Int         @default(1)
-  createdAt               DateTime    @default(now())
+  id                   String   @id @default(cuid())
+  screeningId          String
+  questionIndex        Int // 0-based (0-8 for PHQ-9)
+  answerValueEncrypted Bytes // pgcrypto encrypt of "0"|"1"|"2"|"3"
+  encryptionKeyVersion Int      @default(1)
+  createdAt            DateTime @default(now())
 
   screening MHScreening @relation(fields: [screeningId], references: [id], onDelete: Cascade)
 
@@ -133,41 +133,41 @@ model MHScreeningAnswer {
 // ============================================
 
 model MHReferralLog {
-  id               String            @id @default(cuid())
-  screeningId      String            @unique
-  userId           String            // Maba (denormalized for RLS perf)
-  organizationId   String
+  id             String @id @default(cuid())
+  screeningId    String @unique
+  userId         String // Maba (denormalized for RLS perf)
+  organizationId String
 
-  referredAt        DateTime          @default(now())
-  referredToId      String            // FK → User (SAC counselor)
-  assignmentReason  String            @default("AUTO_ROUND_ROBIN")
+  referredAt       DateTime @default(now())
+  referredToId     String // FK → User (SAC counselor)
+  assignmentReason String   @default("AUTO_ROUND_ROBIN")
 
-  slaDeadlineAt    DateTime           // referredAt + 72h (or 24h for immediateContact)
-  status           MHReferralStatus
+  slaDeadlineAt DateTime // referredAt + 72h (or 24h for immediateContact)
+  status        MHReferralStatus
 
-  statusChangedAt  DateTime          @default(now())
-  acknowledgedAt   DateTime?         // when SAC first accesses (transition to IN_PROGRESS)
-  resolutionAt     DateTime?         // when RESOLVED
+  statusChangedAt DateTime  @default(now())
+  acknowledgedAt  DateTime? // when SAC first accesses (transition to IN_PROGRESS)
+  resolutionAt    DateTime? // when RESOLVED
 
   // Encrypted note
   resolutionNoteEncrypted Bytes?
-  encryptionKeyVersion    Int         @default(1)
+  encryptionKeyVersion    Int    @default(1)
 
-  escalatedAt      DateTime?         // set by SLA miss cron
-  takenOverById    String?           // FK → User (Coordinator)
-  reassignedFromId String?           // FK → User (previous SAC)
+  escalatedAt      DateTime? // set by SLA miss cron
+  takenOverById    String? // FK → User (Coordinator)
+  reassignedFromId String? // FK → User (previous SAC)
   reassignedReason String?
 
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  screening     MHScreening               @relation(fields: [screeningId], references: [id])
-  user          User                      @relation("MHReferralsMaba", fields: [userId], references: [id])
-  referredTo    User                      @relation("MHReferralsSAC", fields: [referredToId], references: [id])
-  takenOverBy   User?                     @relation("MHReferralsTakenOver", fields: [takenOverById], references: [id])
-  organization  Organization              @relation(fields: [organizationId], references: [id])
-  timeline      MHReferralTimeline[]
+  screening    MHScreening          @relation(fields: [screeningId], references: [id])
+  user         User                 @relation("MHReferralsMaba", fields: [userId], references: [id])
+  referredTo   User                 @relation("MHReferralsSAC", fields: [referredToId], references: [id])
+  takenOverBy  User?                @relation("MHReferralsTakenOver", fields: [takenOverById], references: [id])
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  timeline     MHReferralTimeline[]
 
   @@index([referredToId, status, slaDeadlineAt])
   @@index([status, slaDeadlineAt])
@@ -182,14 +182,14 @@ model MHReferralLog {
 // ============================================
 
 model MHReferralTimeline {
-  id                   String    @id @default(cuid())
+  id                   String   @id @default(cuid())
   referralId           String
-  actorId              String    // FK → User (SAC/coordinator/system)
-  action               String    // CREATED, ACKNOWLEDGED, NOTE_ADDED, STATUS_CHANGED, REASSIGNED, ESCALATED, TAKEN_OVER, M10_REFERRED
-  payloadEncrypted     Bytes?    // Optional encrypted payload for notes
-  metadata             Json?     // Non-sensitive meta (previous status, new status, reason)
-  encryptionKeyVersion Int       @default(1)
-  createdAt            DateTime  @default(now())
+  actorId              String // FK → User (SAC/coordinator/system)
+  action               String // CREATED, ACKNOWLEDGED, NOTE_ADDED, STATUS_CHANGED, REASSIGNED, ESCALATED, TAKEN_OVER, M10_REFERRED
+  payloadEncrypted     Bytes? // Optional encrypted payload for notes
+  metadata             Json? // Non-sensitive meta (previous status, new status, reason)
+  encryptionKeyVersion Int      @default(1)
+  createdAt            DateTime @default(now())
 
   referral MHReferralLog @relation(fields: [referralId], references: [id])
 
@@ -202,19 +202,19 @@ model MHReferralTimeline {
 // ============================================
 
 model MHAccessLog {
-  id             String          @id @default(cuid())
+  id             String         @id @default(cuid())
   actorId        String
-  actorRole      UserRole        // snapshot role at time of access
+  actorRole      UserRole // snapshot role at time of access
   action         MHAccessAction
-  targetType     String          // MHScreening, MHReferralLog, MHScreeningAnswer, etc.
+  targetType     String // MHScreening, MHReferralLog, MHScreeningAnswer, etc.
   targetId       String?
-  targetUserId   String?         // denormalized: Maba whose data was accessed (forensic)
+  targetUserId   String? // denormalized: Maba whose data was accessed (forensic)
   organizationId String?
   reason         String?
-  ipHash         String?         // SHA-256 of IP (not plain)
-  userAgent      String?         // truncated to 200 chars
-  metadata       Json?           // non-sensitive meta only; NEVER plaintext payload
-  createdAt      DateTime        @default(now())
+  ipHash         String? // SHA-256 of IP (not plain)
+  userAgent      String? // truncated to 200 chars
+  metadata       Json? // non-sensitive meta only; NEVER plaintext payload
+  createdAt      DateTime       @default(now())
 
   // Note: NO updatedAt (append-only)
   actor User @relation("MHAccessActor", fields: [actorId], references: [id])
@@ -231,23 +231,23 @@ model MHAccessLog {
 // ============================================
 
 model MHConsentRecord {
-  id              String            @id @default(cuid())
-  userId          String
-  cohortId        String
-  consentVersion  String            // e.g., "v1.0" — references src/content/mh-consent/v1.md
-  status          MHConsentStatus
-  grantedAt       DateTime          @default(now())
-  withdrawnAt     DateTime?
+  id               String          @id @default(cuid())
+  userId           String
+  cohortId         String
+  consentVersion   String // e.g., "v1.0" — references src/content/mh-consent/v1.md
+  status           MHConsentStatus
+  grantedAt        DateTime        @default(now())
+  withdrawnAt      DateTime?
   withdrawalReason String?
-  ipHash          String?           // SHA-256 of IP at time of consent
-  userAgent       String?
-  scope           Json              // { screening: true, research: false }
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  ipHash           String? // SHA-256 of IP at time of consent
+  userAgent        String?
+  scope            Json // { screening: true, research: false }
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   // Relations
-  user       User           @relation(fields: [userId], references: [id])
-  cohort     Cohort         @relation(fields: [cohortId], references: [id])
+  user       User          @relation(fields: [userId], references: [id])
+  cohort     Cohort        @relation(fields: [cohortId], references: [id])
   screenings MHScreening[]
 
   @@unique([userId, cohortId, consentVersion])
@@ -263,9 +263,9 @@ model MHResearchConsent {
   id                     String    @id @default(cuid())
   userId                 String
   cohortId               String
-  consentVersion         String    // research-specific consent text version
-  scope                  String[]  // e.g., ["aggregate_analysis", "publication_anonym"]
-  retentionExtendedUntil DateTime  // grantedAt + 2 years
+  consentVersion         String // research-specific consent text version
+  scope                  String[] // e.g., ["aggregate_analysis", "publication_anonym"]
+  retentionExtendedUntil DateTime // grantedAt + 2 years
   withdrawnAt            DateTime?
   createdAt              DateTime  @default(now())
 
@@ -283,10 +283,10 @@ model MHDeletionRequest {
   id                String    @id @default(cuid())
   userId            String
   requestedAt       DateTime  @default(now())
-  scheduledDeleteAt DateTime  // requestedAt + 7 days grace
+  scheduledDeleteAt DateTime // requestedAt + 7 days grace
   processedAt       DateTime?
-  blockedByReason   String?   // "Active RED referral" etc.
-  overrideBy        String?   // Coordinator who reviewed safety override
+  blockedByReason   String? // "Active RED referral" etc.
+  overrideBy        String? // Coordinator who reviewed safety override
   createdAt         DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id])

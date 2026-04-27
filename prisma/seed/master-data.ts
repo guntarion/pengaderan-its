@@ -30,6 +30,7 @@ import {
   formInventoryRowSchema,
   rolePermissionRowSchema,
 } from './master-data/csv-schemas';
+import { loadFaculty } from './master-data/faculty-loader';
 import { validateCrossReferences } from './master-data/integrity-check';
 import { printDiffReport, serializeDiff, type EntityDiff } from './master-data/diff-computer';
 import { acquireAdvisoryLock } from './master-data/lock';
@@ -141,6 +142,27 @@ async function main() {
       throw new Error(`Integrity check failed:\n${integrity.errors.join('\n')}`);
     }
 
+    const dryRun = isPreview;
+
+    // Step 3.5: Load Faculty FIRST (FK dependency for Organization + variant layer)
+    if (!onlyEntity || onlyEntity === 'faculty') {
+      log.info('Loading Faculty (M02 RV-A)');
+      const facultyResult = await loadFaculty(prisma, dryRun);
+      log.info('Faculty load complete', facultyResult);
+
+      // After Faculty seeded, update HMTC org to point to FT-EIC if not yet set
+      if (!dryRun) {
+        const hmtcOrg = await prisma.organization.findUnique({ where: { code: 'HMTC' } });
+        if (hmtcOrg && !hmtcOrg.facultyCode) {
+          await prisma.organization.update({
+            where: { code: 'HMTC' },
+            data: { facultyCode: 'FT-EIC' },
+          });
+          log.info('HMTC organization facultyCode updated', { facultyCode: 'FT-EIC' });
+        }
+      }
+    }
+
     // Step 4: Resolve organization
     const org = await prisma.organization.findUnique({ where: { code: DEFAULT_ORG_CODE } });
     if (!org) {
@@ -150,7 +172,6 @@ async function main() {
     log.info('Using organization', { code: DEFAULT_ORG_CODE, id: organizationId });
 
     // Step 5: Run upserts (or dry-run compute diffs)
-    const dryRun = isPreview;
     const diffs: EntityDiff[] = [];
 
     // Order per 06-model-data.md §6.4:

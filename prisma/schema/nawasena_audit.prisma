@@ -218,18 +218,18 @@ enum DemographicField {
 
 model NawasenaAuditLog {
   id             String      @id @default(cuid())
-  organizationId String?     // nullable for platform-level actions
+  organizationId String? // nullable for platform-level actions
   action         AuditAction
-  actorUserId    String?     // null for system actions
-  subjectUserId  String?     // for role change, pakta sign, etc.
-  entityType     String      // "User", "Cohort", "PaktaSignature", ...
-  entityId       String      // UUID as string
-  beforeValue    Json?       // snapshot before change
-  afterValue     Json?       // snapshot after change
+  actorUserId    String? // null for system actions
+  subjectUserId  String? // for role change, pakta sign, etc.
+  entityType     String // "User", "Cohort", "PaktaSignature", ...
+  entityId       String // UUID as string
+  beforeValue    Json? // snapshot before change
+  afterValue     Json? // snapshot after change
   reason         String?     @db.Text // required for role change, cross-org, full delete
   ipAddress      String?
   userAgent      String?     @db.Text
-  metadata       Json?       // additional context: file hash for bulk import, target org, etc.
+  metadata       Json? // additional context: file hash for bulk import, target org, etc.
   createdAt      DateTime    @default(now())
 
   // Relations

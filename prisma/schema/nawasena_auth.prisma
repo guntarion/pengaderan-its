@@ -42,14 +42,14 @@ enum UserPaktaStatus {
 // ============================================
 
 model User {
-  id            String     @id @default(cuid())
+  id String @id @default(cuid())
 
   // Identity
-  email         String     @unique // always lowercased
+  email         String    @unique // always lowercased
   emailVerified DateTime?
-  nrp           String?    // 10-digit student ID (wajib MABA, optional others)
+  nrp           String? // 10-digit student ID (wajib MABA, optional others)
   fullName      String
-  displayName   String?    // panggilan
+  displayName   String? // panggilan
   image         String?
 
   // Scoping
@@ -59,18 +59,18 @@ model User {
   status          UserStatus @default(PENDING_PROFILE_SETUP)
 
   // NextAuth adapter field (for credentials/OAuth password)
-  password      String?
+  password String?
 
   // Demographics (opt-in, all nullable)
-  isRantau              Boolean?
-  isKIP                 Boolean?
-  hasDisability         Boolean?
-  disabilityNotes       String?
-  province              String?  // 2-char province code (e.g. "JI", "JK")
-  emergencyContactName  String?
+  isRantau                 Boolean?
+  isKIP                    Boolean?
+  hasDisability            Boolean?
+  disabilityNotes          String?
+  province                 String? // 2-char province code (e.g. "JI", "JK")
+  emergencyContactName     String?
   emergencyContactRelation String?
-  emergencyContactPhone String?
-  demographicsUpdatedAt DateTime?
+  emergencyContactPhone    String?
+  demographicsUpdatedAt    DateTime?
 
   // Pakta status (denormalized for fast middleware gate check)
   paktaPanitiaStatus      UserPaktaStatus?
@@ -78,159 +78,164 @@ model User {
   paktaPengader2027Status UserPaktaStatus?
 
   // M03: Contact sharing + interest matching
-  shareContact    Boolean  @default(true) // opt-out: false = hide contact from peers
-  interests       Json     @default("[]")  // array of interest strings for Kasuh matchmaking
+  shareContact Boolean @default(true) // opt-out: false = hide contact from peers
+  interests    Json    @default("[]") // array of interest strings for Kasuh matchmaking
+
+  // REVISI MULTI-HMJ — start
+  facultyCode  String? // mirror dari Organization.facultyCode, denormalized untuk filter cross-fak tanpa join
+  programStudi String? // free-text, e.g. "S1 Teknik Informatika"
+  // REVISI MULTI-HMJ — end
 
   // M07: Time Capsule & Life Map share settings
   timeCapsuleShareDefault Boolean @default(false) // global share default for new TC entries
   lifeMapShareDefault     Boolean @default(false) // global share default for new LM goals
-  extendedRetention       Int     @default(0)     // 0-3 years retention extension
+  extendedRetention       Int     @default(0) // 0-3 years retention extension
 
   // Audit fields
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deactivatedAt   DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deactivatedAt     DateTime?
   deactivatedReason String?
-  lastLoginAt     DateTime?
-  lastLoginIp     String?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
 
   // Session revocation via epoch
-  sessionEpoch    Int      @default(0)
+  sessionEpoch Int @default(0)
 
   // Relations
-  organization    Organization    @relation(fields: [organizationId], references: [id])
-  currentCohort   Cohort?         @relation("UserCurrentCohort", fields: [currentCohortId], references: [id])
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  currentCohort Cohort?      @relation("UserCurrentCohort", fields: [currentCohortId], references: [id])
 
   // NextAuth relations
-  accounts        Account[]
-  sessions        Session[]
+  accounts Account[]
+  sessions Session[]
 
   // Pakta relations
   paktaSignatures PaktaSignature[]
   paktaRejections PaktaRejection[]
 
   // Audit log (as actor and as subject)
-  auditLogsActor  NawasenaAuditLog[] @relation("AuditActor")
+  auditLogsActor   NawasenaAuditLog[] @relation("AuditActor")
   auditLogsSubject NawasenaAuditLog[] @relation("AuditSubject")
 
   // Cohorts created by this user
-  cohortsCreated  Cohort[]        @relation("CohortCreator")
+  cohortsCreated Cohort[] @relation("CohortCreator")
 
   // Whitelist added by this user
-  whitelistAdded  WhitelistEmail[] @relation("WhitelistAddedBy")
+  whitelistAdded WhitelistEmail[] @relation("WhitelistAddedBy")
 
   // PaktaVersion published by this user
   paktaVersionsPublished PaktaVersion[] @relation("PaktaPublisher")
 
   // AI usage tracking
-  aiUsage           AIUsage[]
-  aiOperationLogs   AIOperationLog[]
+  aiUsage         AIUsage[]
+  aiOperationLogs AIOperationLog[]
 
   // M15 Notification relations
-  notificationPreference    NotificationPreference?       @relation("UserNotificationPreference")
-  notificationLogs          NotificationLog[]             @relation("UserNotificationLogs")
-  notificationSubscriptions NotificationSubscription[]    @relation("UserNotificationSubscriptions")
+  notificationPreference      NotificationPreference?       @relation("UserNotificationPreference")
+  notificationLogs            NotificationLog[]             @relation("UserNotificationLogs")
+  notificationSubscriptions   NotificationSubscription[]    @relation("UserNotificationSubscriptions")
   notificationVersionsCreated NotificationTemplateVersion[] @relation("NotificationVersionCreator")
-  notificationRulesCreated  NotificationRule[]            @relation("NotificationRuleCreator")
+  notificationRulesCreated    NotificationRule[]            @relation("NotificationRuleCreator")
 
   // M03 Struktur Angkatan relations
-  kpGroupsCoordinating    KPGroup[]       @relation("KPGroupCoordinator")
-  kpGroupsCreated         KPGroup[]       @relation("KPGroupCreator")
-  kpGroupMemberships      KPGroupMember[] @relation("KPGroupMemberUser")
-  buddyPairsCreated       BuddyPair[]     @relation("BuddyPairCreator")
-  buddyPairMemberships    BuddyPairMember[] @relation("BuddyPairMemberUser")
-  kasuhPairsAsMaba        KasuhPair[]     @relation("KasuhPairMaba")
-  kasuhPairsAsKasuh       KasuhPair[]     @relation("KasuhPairKasuh")
-  kasuhPairsCreated       KasuhPair[]     @relation("KasuhPairCreator")
-  pairingRequestsAsRequester PairingRequest[] @relation("PairingRequestRequester")
-  pairingRequestsAsSubject   PairingRequest[] @relation("PairingRequestSubject")
-  pairingRequestsResolved    PairingRequest[] @relation("PairingRequestResolver")
+  kpGroupsCoordinating        KPGroup[]          @relation("KPGroupCoordinator")
+  kpGroupsCreated             KPGroup[]          @relation("KPGroupCreator")
+  kpGroupMemberships          KPGroupMember[]    @relation("KPGroupMemberUser")
+  buddyPairsCreated           BuddyPair[]        @relation("BuddyPairCreator")
+  buddyPairMemberships        BuddyPairMember[]  @relation("BuddyPairMemberUser")
+  kasuhPairsAsMaba            KasuhPair[]        @relation("KasuhPairMaba")
+  kasuhPairsAsKasuh           KasuhPair[]        @relation("KasuhPairKasuh")
+  kasuhPairsCreated           KasuhPair[]        @relation("KasuhPairCreator")
+  pairingRequestsAsRequester  PairingRequest[]   @relation("PairingRequestRequester")
+  pairingRequestsAsSubject    PairingRequest[]   @relation("PairingRequestSubject")
+  pairingRequestsResolved     PairingRequest[]   @relation("PairingRequestResolver")
   bulkPairingBatchesCommitted BulkPairingBatch[] @relation("BulkPairingBatchCommitter")
 
   // M05 Passport Digital back-relations
-  passportEntriesAsMaba       PassportEntry[]        @relation("PassportEntryMaba")
-  passportEntriesAsVerifier   PassportEntry[]        @relation("PassportEntryVerifier")
-  passportEntriesAsEscalated  PassportEntry[]        @relation("PassportEntryEscalatedTo")
-  passportEntriesAsOverridden PassportEntry[]        @relation("PassportEntryOverride")
-  passportQrSessionsCreated   PassportQrSession[]    @relation("PassportQrSessionCreator")
-  passportSkemExports         PassportSkemExportLog[]  @relation("PassportSkemExportGenerator")
+  passportEntriesAsMaba       PassportEntry[]         @relation("PassportEntryMaba")
+  passportEntriesAsVerifier   PassportEntry[]         @relation("PassportEntryVerifier")
+  passportEntriesAsEscalated  PassportEntry[]         @relation("PassportEntryEscalatedTo")
+  passportEntriesAsOverridden PassportEntry[]         @relation("PassportEntryOverride")
+  passportQrSessionsCreated   PassportQrSession[]     @relation("PassportQrSessionCreator")
+  passportSkemExports         PassportSkemExportLog[] @relation("PassportSkemExportGenerator")
 
   // M06 Event Instance back-relations
-  rsvps               RSVP[]        @relation("UserRSVPs")
-  eventNpsEntries     EventNPS[]    @relation("UserEventNPS")
-  attendances         Attendance[]  @relation("UserAttendances")
+  rsvps           RSVP[]       @relation("UserRSVPs")
+  eventNpsEntries EventNPS[]   @relation("UserEventNPS")
+  attendances     Attendance[] @relation("UserAttendances")
 
   // M08 Event Execution back-relations
-  outputsUploaded           OutputUpload[]        @relation("OutputUploadUploader")
-  evaluationsFilled         KegiatanEvaluation[]  @relation("KegiatanEvaluationFilledBy")
-  qrSessionsCreated         KegiatanQRSession[]   @relation("KegiatanQRSessionCreator")
-  instancesCancelled        KegiatanInstance[]    @relation("KegiatanInstanceCancelledBy")
-  instancesRescheduled      KegiatanInstance[]    @relation("KegiatanInstanceRescheduledBy")
-  attendancesNoted          Attendance[]          @relation("AttendanceNotedBy")
-  attendancesVerified       Attendance[]          @relation("AttendanceVerifier")
+  outputsUploaded      OutputUpload[]       @relation("OutputUploadUploader")
+  evaluationsFilled    KegiatanEvaluation[] @relation("KegiatanEvaluationFilledBy")
+  qrSessionsCreated    KegiatanQRSession[]  @relation("KegiatanQRSessionCreator")
+  instancesCancelled   KegiatanInstance[]   @relation("KegiatanInstanceCancelledBy")
+  instancesRescheduled KegiatanInstance[]   @relation("KegiatanInstanceRescheduledBy")
+  attendancesNoted     Attendance[]         @relation("AttendanceNotedBy")
+  attendancesVerified  Attendance[]         @relation("AttendanceVerifier")
 
   // M07 Time Capsule & Life Map back-relations
-  timeCapsuleEntries      TimeCapsuleEntry[]
-  timeCapsuleAttachments  TimeCapsuleAttachment[]
-  lifeMaps                LifeMap[]
-  lifeMapUpdates          LifeMapUpdate[]
+  timeCapsuleEntries     TimeCapsuleEntry[]
+  timeCapsuleAttachments TimeCapsuleAttachment[]
+  lifeMaps               LifeMap[]
+  lifeMapUpdates         LifeMapUpdate[]
 
   // M09 KP & Kasuh Logbook back-relations
-  kpLogDailies        KPLogDaily[]  @relation("KPLogDailyKP")
-  kpLogWeeklies       KPLogWeekly[] @relation("KPLogWeeklyKP")
-  kasuhLogsAsKasuh    KasuhLog[]    @relation("KasuhLogKasuh")
-  kasuhLogsAsMaba     KasuhLog[]    @relation("KasuhLogMaba")
+  kpLogDailies     KPLogDaily[]  @relation("KPLogDailyKP")
+  kpLogWeeklies    KPLogWeekly[] @relation("KPLogWeeklyKP")
+  kasuhLogsAsKasuh KasuhLog[]    @relation("KasuhLogKasuh")
+  kasuhLogsAsMaba  KasuhLog[]    @relation("KasuhLogMaba")
 
   // M11 Mental Health Screening flags
-  isSACCounselor              Boolean                       @default(false)
-  isPoliPsikologiCoord        Boolean                       @default(false)
-  mhScreenings                MHScreening[]
-  mhReferralsAsMaba           MHReferralLog[]               @relation("MHReferralsMaba")
-  mhReferralsAsSAC            MHReferralLog[]               @relation("MHReferralsSAC")
-  mhReferralsTakenOver        MHReferralLog[]               @relation("MHReferralsTakenOver")
-  mhConsentRecords            MHConsentRecord[]
-  mhResearchConsents          MHResearchConsent[]
-  mhDeletionRequests          MHDeletionRequest[]
-  mhAccessLogs                MHAccessLog[]                 @relation("MHAccessActor")
+  isSACCounselor       Boolean             @default(false)
+  isPoliPsikologiCoord Boolean             @default(false)
+  mhScreenings         MHScreening[]
+  mhReferralsAsMaba    MHReferralLog[]     @relation("MHReferralsMaba")
+  mhReferralsAsSAC     MHReferralLog[]     @relation("MHReferralsSAC")
+  mhReferralsTakenOver MHReferralLog[]     @relation("MHReferralsTakenOver")
+  mhConsentRecords     MHConsentRecord[]
+  mhResearchConsents   MHResearchConsent[]
+  mhDeletionRequests   MHDeletionRequest[]
+  mhAccessLogs         MHAccessLog[]       @relation("MHAccessActor")
 
   // M10 Safeguard & Insiden
   isSafeguardOfficer          Boolean                       @default(false)
-  incidentsReported           SafeguardIncident[]            @relation("IncidentReporter")
-  incidentsAffected           SafeguardIncident[]            @relation("IncidentAffected")
-  incidentsClaimed            SafeguardIncident[]            @relation("IncidentClaimer")
-  incidentsResolved           SafeguardIncident[]            @relation("IncidentResolver")
-  incidentsEscalated          SafeguardIncident[]            @relation("IncidentEscalator")
-  incidentsRetracted          SafeguardIncident[]            @relation("IncidentRetractor")
-  consequencesAsTarget        ConsequenceLog[]               @relation("ConsequenceTarget")
-  consequencesAssigned        ConsequenceLog[]               @relation("ConsequenceAssigner")
-  consequencesReviewed        ConsequenceLog[]               @relation("ConsequenceReviewer")
-  consequencesCancelled       ConsequenceLog[]               @relation("ConsequenceCanceller")
-  incidentTimelineEntries     IncidentTimelineEntry[]        @relation("TimelineActor")
-  escalationFallbacksReceived SafeguardEscalationFallback[]  @relation("EscalationFallbackReceiver")
+  incidentsReported           SafeguardIncident[]           @relation("IncidentReporter")
+  incidentsAffected           SafeguardIncident[]           @relation("IncidentAffected")
+  incidentsClaimed            SafeguardIncident[]           @relation("IncidentClaimer")
+  incidentsResolved           SafeguardIncident[]           @relation("IncidentResolver")
+  incidentsEscalated          SafeguardIncident[]           @relation("IncidentEscalator")
+  incidentsRetracted          SafeguardIncident[]           @relation("IncidentRetractor")
+  consequencesAsTarget        ConsequenceLog[]              @relation("ConsequenceTarget")
+  consequencesAssigned        ConsequenceLog[]              @relation("ConsequenceAssigner")
+  consequencesReviewed        ConsequenceLog[]              @relation("ConsequenceReviewer")
+  consequencesCancelled       ConsequenceLog[]              @relation("ConsequenceCanceller")
+  incidentTimelineEntries     IncidentTimelineEntry[]       @relation("TimelineActor")
+  escalationFallbacksReceived SafeguardEscalationFallback[] @relation("EscalationFallbackReceiver")
 
   // M04 Pulse & Journal relations
-  pulseChecks             PulseCheck[]    @relation("UserPulseChecks")
-  journalDrafts           JournalDraft[]  @relation("UserJournalDrafts")
-  journals                Journal[]       @relation("UserJournals")
-  rubricScoresReceived    RubrikScore[]   @relation("RubrikScoreSubject")
-  rubricScoresGiven       RubrikScore[]   @relation("RubrikScoreScoredBy")
-  redFlagSubjects         RedFlagEvent[]  @relation("RedFlagSubject")
-  redFlagNotified         RedFlagEvent[]  @relation("RedFlagNotified")
-  followUpsGiven          FollowUpRecord[] @relation("FollowUpActor")
-  followUpsReceived       FollowUpRecord[] @relation("FollowUpSubject")
+  pulseChecks          PulseCheck[]     @relation("UserPulseChecks")
+  journalDrafts        JournalDraft[]   @relation("UserJournalDrafts")
+  journals             Journal[]        @relation("UserJournals")
+  rubricScoresReceived RubrikScore[]    @relation("RubrikScoreSubject")
+  rubricScoresGiven    RubrikScore[]    @relation("RubrikScoreScoredBy")
+  redFlagSubjects      RedFlagEvent[]   @relation("RedFlagSubject")
+  redFlagNotified      RedFlagEvent[]   @relation("RedFlagNotified")
+  followUpsGiven       FollowUpRecord[] @relation("FollowUpActor")
+  followUpsReceived    FollowUpRecord[] @relation("FollowUpSubject")
 
   // M13 Dashboard Multi-Role back-relations
-  alertsTargeted        RedFlagAlert[] @relation("AlertTarget")
-  alertsAcknowledged    RedFlagAlert[] @relation("AlertAck")
-  alertsDismissed       RedFlagAlert[] @relation("AlertDismiss")
+  alertsTargeted     RedFlagAlert[] @relation("AlertTarget")
+  alertsAcknowledged RedFlagAlert[] @relation("AlertAck")
+  alertsDismissed    RedFlagAlert[] @relation("AlertDismiss")
 
   // M14 Triwulan Review back-relations
-  triwulanReviewsGenerated    TriwulanReview[]         @relation("TRGeneratedBy")
-  triwulanReviewsSubmitted    TriwulanReview[]         @relation("TRSubmittedBy")
-  triwulanReviewsPembinaSigned TriwulanReview[]        @relation("TRPembinaSignedBy")
-  triwulanReviewsBLMAcked     TriwulanReview[]         @relation("TRBLMAckBy")
-  triwulanSignatureEvents     TriwulanSignatureEvent[] @relation("TRSignatureEventActor")
-  auditSubstansiAssessments   AuditSubstansiResult[]   @relation("TRAssessedBy")
+  triwulanReviewsGenerated     TriwulanReview[]         @relation("TRGeneratedBy")
+  triwulanReviewsSubmitted     TriwulanReview[]         @relation("TRSubmittedBy")
+  triwulanReviewsPembinaSigned TriwulanReview[]         @relation("TRPembinaSignedBy")
+  triwulanReviewsBLMAcked      TriwulanReview[]         @relation("TRBLMAckBy")
+  triwulanSignatureEvents      TriwulanSignatureEvent[] @relation("TRSignatureEventActor")
+  auditSubstansiAssessments    AuditSubstansiResult[]   @relation("TRAssessedBy")
 
   @@unique([organizationId, nrp])
   @@index([organizationId, role])
@@ -238,6 +243,8 @@ model User {
   @@index([organizationId, status])
   @@index([organizationId, isSafeguardOfficer])
   @@index([organizationId, isSACCounselor])
+  @@index([facultyCode]) // REVISI MULTI-HMJ
+  @@index([organizationId, facultyCode]) // REVISI MULTI-HMJ
   @@map("users")
 }
 
@@ -292,7 +299,7 @@ model VerificationToken {
 model WhitelistEmail {
   id                  String    @id @default(cuid())
   organizationId      String
-  email               String    // lowercased
+  email               String // lowercased
   preassignedRole     UserRole
   preassignedCohortId String?
   addedBy             String
@@ -304,9 +311,9 @@ model WhitelistEmail {
   updatedAt           DateTime  @updatedAt
 
   // Relations
-  organization       Organization @relation(fields: [organizationId], references: [id])
-  addedByUser        User         @relation("WhitelistAddedBy", fields: [addedBy], references: [id])
-  preassignedCohort  Cohort?      @relation("CohortWhitelist", fields: [preassignedCohortId], references: [id])
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  addedByUser       User         @relation("WhitelistAddedBy", fields: [addedBy], references: [id])
+  preassignedCohort Cohort?      @relation("CohortWhitelist", fields: [preassignedCohortId], references: [id])
 
   @@unique([organizationId, email])
   @@index([isConsumed])
@@ -318,13 +325,13 @@ model WhitelistEmail {
 // ============================================
 
 model RevokedSession {
-  id          String   @id @default(cuid())
-  userId      String
-  jti         String?  // JWT ID being revoked
-  revokedAt   DateTime @default(now())
-  revokedBy   String?
-  reason      String?
-  expiresAt   DateTime // prune-able after this date
+  id        String   @id @default(cuid())
+  userId    String
+  jti       String? // JWT ID being revoked
+  revokedAt DateTime @default(now())
+  revokedBy String?
+  reason    String?
+  expiresAt DateTime // prune-able after this date
 
   @@index([userId])
   @@index([jti])

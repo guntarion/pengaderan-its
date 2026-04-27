@@ -1,9 +1,34 @@
 // prisma/schema/nawasena_master.prisma
 // Domain: Master Data & Taksonomi (NAWASENA M02)
-// 11 tabel: Kegiatan, Tujuan, KPIDef, AnchorRef, PassportItem, Rubrik,
-//            ForbiddenAct, SafeguardProtocol, TaxonomyMeta, FormInventory, RolePermission
-// 12 enum: NilaiKey, DimensiKey, FaseKey, KategoriKey, KegiatanIntensity, KegiatanScale,
-//           KPIType, EvidenceType, ForbiddenActSeverity, TaxonomyGroup, FormPriority, FormFrequency
+// 13 tabel: Faculty, Kegiatan, KegiatanFacultyVariant, Tujuan, KPIDef, AnchorRef, PassportItem,
+//            Rubrik, ForbiddenAct, SafeguardProtocol, TaxonomyMeta, FormInventory, RolePermission
+// 14 enum: NilaiKey, DimensiKey, FaseKey, KategoriKey, KegiatanIntensity, KegiatanScale,
+//           KPIType, EvidenceType, ForbiddenActSeverity, TaxonomyGroup, FormPriority, FormFrequency,
+//           RumpunKeilmuan, PMHMJCategory
+
+// ============================================
+// ENUMS — Multi-Fakultas (REVISI M02 RV-A)
+// ============================================
+
+/// Rumpun keilmuan untuk pengelompokan fakultas dan shared anchor per-rumpun
+enum RumpunKeilmuan {
+  SAINS
+  TEKNIK
+  PERENCANAAN
+  KELAUTAN
+  ELEKTRO_IT
+  KREATIF_BISNIS
+  VOKASI
+  KEDOKTERAN
+}
+
+/// 4 kategori induk PM-HMJ — orthogonal terhadap kategori K1–K7
+enum PMHMJCategory {
+  PRA
+  MASSAL
+  BERKELANJUTAN
+  INSTITUT_INTERFACE
+}
 
 // ============================================
 // ENUMS — Taksonomi Primer (hardcoded, type-safe)
@@ -132,42 +157,128 @@ enum FormFrequency {
 }
 
 // ============================================
+// MODEL: Faculty (8 ITS faculties — REVISI M02 RV-A)
+// ============================================
+
+model Faculty {
+  /// Kode fakultas pendek (FSAD, FTIRS, FT-SPK, FTK, FT-EIC, FDKBD, FV, FKK)
+  code String @id
+
+  /// Nama lengkap fakultas
+  name String
+
+  /// Rumpun keilmuan untuk shared anchor per-rumpun
+  rumpun RumpunKeilmuan
+
+  /// Asosiasi profesi yang relevan
+  professionAssociations String[]
+
+  /// Catatan/metadata bebas
+  notes String?
+
+  /// Toggle aktif (untuk fakultas yang sedang dalam transisi split/merge)
+  isActive Boolean @default(true)
+
+  /// Reserved untuk extensi future (URL website, kontak, dll)
+  metadata Json? @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  variants      KegiatanFacultyVariant[]
+  anchorRefs    AnchorRef[]              @relation("FacultyToAnchorRef")
+  tujuan        Tujuan[]                 @relation("FacultyToTujuan")
+  passportItems PassportItem[]           @relation("FacultyToPassportItem")
+  organizations Organization[]           @relation("FacultyToOrganization")
+
+  @@index([rumpun])
+  @@index([isActive])
+  @@map("faculty")
+}
+
+// ============================================
+// MODEL: KegiatanFacultyVariant (per-faculty content overrides — REVISI M02 RV-A)
+// ============================================
+
+model KegiatanFacultyVariant {
+  id String @id @default(uuid())
+
+  /// FK ke Kegiatan; whitelist saat ini: K4.04, K4.05, K4.06, K7.01
+  kegiatanId String
+  kegiatan   Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+
+  /// FK ke Faculty
+  facultyCode String
+  faculty     Faculty @relation(fields: [facultyCode], references: [code], onDelete: Restrict)
+
+  /// Override field konten (nullable — merge logic hanya overwrite bila non-null)
+  deskripsiOverride     String? @db.Text
+  tujuanOverride        String? @db.Text
+  prerequisitesOverride String? @db.Text
+  contohOverride        String? @db.Text
+
+  /// Override threshold KPI subset; key = kpiId, value = number
+  kpiThresholdOverrideJson Json?
+
+  /// Anchor codes tambahan (di luar universal & per-rumpun)
+  anchorRefAdditional String[] @default([])
+
+  isActive Boolean @default(true)
+  metadata Json?   @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([kegiatanId, facultyCode])
+  @@index([facultyCode])
+  @@index([kegiatanId])
+  @@map("kegiatan_faculty_variant")
+}
+
+// ============================================
 // MODEL: Kegiatan (hybrid multi-tenant master activity)
 // ============================================
 
 model Kegiatan {
-  id              String             @id // natural ID e.g. "K4.05"
-  nama            String
+  id               String            @id // natural ID e.g. "K4.05"
+  nama             String
   deskripsiSingkat String            @db.VarChar(500)
-  deskripsiFull   String?            @db.Text // markdown
-  rasional        String             @db.Text // markdown
-  safeguardNotes  String?            @db.Text
-  nilai           NilaiKey
-  dimensi         DimensiKey
-  fase            FaseKey
-  kategori        KategoriKey
-  intensity       KegiatanIntensity
-  scale           KegiatanScale
-  durasiMenit     Int
-  frekuensi       String
-  picRoleHint     String?
-  prasyaratIds    String[]           // array of Kegiatan IDs
-  isActive        Boolean            @default(true)
-  isGlobal        Boolean            @default(false)
-  organizationId  String?            // FK → Organization (null when isGlobal=true)
-  displayOrder    Int                @default(0)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  deskripsiFull    String?           @db.Text // markdown
+  rasional         String            @db.Text // markdown
+  safeguardNotes   String?           @db.Text
+  nilai            NilaiKey
+  dimensi          DimensiKey
+  fase             FaseKey
+  kategori         KategoriKey
+  intensity        KegiatanIntensity
+  scale            KegiatanScale
+  durasiMenit      Int
+  frekuensi        String
+  picRoleHint      String?
+  prasyaratIds     String[] // array of Kegiatan IDs
+  isActive         Boolean           @default(true)
+  isGlobal         Boolean           @default(false)
+  organizationId   String? // FK → Organization (null when isGlobal=true)
+  displayOrder     Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  /// 4 kategori induk PM-HMJ — orthogonal terhadap kategori K1–K7 (REVISI M02 RV-A)
+  pmHmjCategory PMHMJCategory @default(MASSAL)
 
   // Relations
-  organization    Organization?      @relation(fields: [organizationId], references: [id])
-  tujuan          Tujuan[]
-  kpiDefs         KPIDef[]
-  anchors         AnchorRef[]
-  passportItems   PassportItem[]
+  organization  Organization?  @relation(fields: [organizationId], references: [id])
+  tujuan        Tujuan[]
+  kpiDefs       KPIDef[]
+  anchors       AnchorRef[]
+  passportItems PassportItem[]
+
+  // REVISI M02 RV-A: variant layer
+  variants KegiatanFacultyVariant[]
 
   // M06 back-relation
-  instances       KegiatanInstance[] @relation("KegiatanInstances")
+  instances KegiatanInstance[] @relation("KegiatanInstances")
 
   @@index([fase])
   @@index([kategori])
@@ -175,6 +286,8 @@ model Kegiatan {
   @@index([organizationId, isActive])
   @@index([isGlobal, isActive])
   @@index([displayOrder])
+  @@index([pmHmjCategory]) // REVISI M02 RV-A
+  @@index([pmHmjCategory, fase]) // REVISI M02 RV-A — compound filter dashboard
   @@map("kegiatan")
 }
 
@@ -183,15 +296,20 @@ model Kegiatan {
 // ============================================
 
 model Tujuan {
-  id          String   @id // natural ID e.g. "T-K4.05-1"
-  kegiatanId  String
-  ordinal     Int
-  text        String   @db.Text
+  id         String @id // natural ID e.g. "T-K4.05-1"
+  kegiatanId String
+  ordinal    Int
+  text       String @db.Text
+
+  /// Scoping per fakultas (NULL = universal) — REVISI M02 RV-A
+  facultyCode String?
+  faculty     Faculty? @relation("FacultyToTujuan", fields: [facultyCode], references: [code], onDelete: Restrict)
 
   // Relations
-  kegiatan    Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
 
   @@index([kegiatanId, ordinal])
+  @@index([kegiatanId, facultyCode]) // REVISI M02 RV-A
   @@map("tujuan")
 }
 
@@ -200,22 +318,22 @@ model Tujuan {
 // ============================================
 
 model KPIDef {
-  id             String   @id // natural ID e.g. "KPI-K4.05-1"
-  kegiatanId     String
-  text           String
-  type           KPIType
-  targetNumeric  Float?
-  unit           String?
-  isLeading      Boolean  @default(true)
-  measureMethod  String?
-  outputField    String?
-  outcomeField   String?
+  id            String  @id // natural ID e.g. "KPI-K4.05-1"
+  kegiatanId    String
+  text          String
+  type          KPIType
+  targetNumeric Float?
+  unit          String?
+  isLeading     Boolean @default(true)
+  measureMethod String?
+  outputField   String?
+  outcomeField  String?
 
   // Relations
-  kegiatan       Kegiatan    @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
 
   // M13 Dashboard back-relations
-  kpiSignals     KPISignal[]
+  kpiSignals KPISignal[]
 
   @@index([kegiatanId])
   @@map("kpi_defs")
@@ -226,16 +344,26 @@ model KPIDef {
 // ============================================
 
 model AnchorRef {
-  id          String   @id // natural ID e.g. "AR-K4.05-1"
-  kegiatanId  String
-  source      String
-  link        String?
-  excerpt     String?  @db.Text
+  id         String  @id // natural ID e.g. "AR-K4.05-1"
+  kegiatanId String
+  source     String
+  link       String?
+  excerpt    String? @db.Text
+
+  /// Scoping per fakultas (NULL = universal/per-rumpun) — REVISI M02 RV-A
+  /// CHECK constraint: NOT (facultyCode IS NOT NULL AND rumpunCode IS NOT NULL)
+  facultyCode String?
+  faculty     Faculty? @relation("FacultyToAnchorRef", fields: [facultyCode], references: [code], onDelete: Restrict)
+
+  /// Scoping per rumpun keilmuan (NULL = universal/per-fakultas) — REVISI M02 RV-A
+  rumpunCode RumpunKeilmuan?
 
   // Relations
-  kegiatan    Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Restrict)
 
   @@index([kegiatanId])
+  @@index([kegiatanId, facultyCode]) // REVISI M02 RV-A
+  @@index([kegiatanId, rumpunCode]) // REVISI M02 RV-A
   @@map("anchor_refs")
 }
 
@@ -244,28 +372,34 @@ model AnchorRef {
 // ============================================
 
 model PassportItem {
-  id                String       @id // natural ID e.g. "PI-D1-01"
-  dimensi           DimensiKey
-  kegiatanId        String?      // optional FK to Kegiatan
-  description       String
-  targetWaktu       String
-  evidenceType      EvidenceType
-  verifierRoleHint  String
-  ordinal           Int
+  id               String       @id // natural ID e.g. "PI-D1-01"
+  dimensi          DimensiKey
+  kegiatanId       String? // optional FK to Kegiatan
+  description      String
+  targetWaktu      String
+  evidenceType     EvidenceType
+  verifierRoleHint String
+  ordinal          Int
 
   // M05 SKEM fields (added for SKEM export mapping)
-  skemPoints        Float?       // bila null = tidak qualify SKEM
-  skemCategory      String?      // mis. "Kepemimpinan", "Akademik", "Pengabdian"
+  skemPoints   Float? // bila null = tidak qualify SKEM
+  skemCategory String? // mis. "Kepemimpinan", "Akademik", "Pengabdian"
+
+  /// Scoping per fakultas (NULL = universal) — REVISI M02 RV-A
+  facultyCode String?
+  faculty     Faculty? @relation("FacultyToPassportItem", fields: [facultyCode], references: [code], onDelete: Restrict)
 
   // Relations
-  kegiatan          Kegiatan?    @relation(fields: [kegiatanId], references: [id], onDelete: SetNull)
+  kegiatan Kegiatan? @relation(fields: [kegiatanId], references: [id], onDelete: SetNull)
 
   // M05 back-relations
-  passportEntries   PassportEntry[]
-  qrSessions        PassportQrSession[]
+  passportEntries PassportEntry[]
+  qrSessions      PassportQrSession[]
 
   @@index([dimensi, ordinal])
   @@index([kegiatanId])
+  @@index([facultyCode, dimensi]) // REVISI M02 RV-A
+  @@index([facultyCode, kegiatanId]) // REVISI M02 RV-A
   @@map("passport_items")
 }
 
@@ -274,13 +408,13 @@ model PassportItem {
 // ============================================
 
 model Rubrik {
-  id                     String   @id // e.g. "AACU_ETHICAL_REASONING_L3"
-  rubrikKey              String
-  rubrikLabel            String
-  level                  Int      // 1, 2, 3, 4
-  levelLabel             String
-  levelDescriptor        String   @db.Text
-  applicableKegiatanIds  String[] // array of Kegiatan IDs
+  id                    String   @id // e.g. "AACU_ETHICAL_REASONING_L3"
+  rubrikKey             String
+  rubrikLabel           String
+  level                 Int // 1, 2, 3, 4
+  levelLabel            String
+  levelDescriptor       String   @db.Text
+  applicableKegiatanIds String[] // array of Kegiatan IDs
 
   @@unique([rubrikKey, level])
   @@index([rubrikKey])
@@ -292,14 +426,14 @@ model Rubrik {
 // ============================================
 
 model ForbiddenAct {
-  id                String               @id // natural "FA-01"
-  category          String
-  description       String               @db.Text
-  regulationSource  String
-  severity          ForbiddenActSeverity
-  consequence       String               @db.Text
-  detectionSignal   String               @db.Text
-  ordinal           Int
+  id               String               @id // natural "FA-01"
+  category         String
+  description      String               @db.Text
+  regulationSource String
+  severity         ForbiddenActSeverity
+  consequence      String               @db.Text
+  detectionSignal  String               @db.Text
+  ordinal          Int
 
   @@index([severity])
   @@index([ordinal])
@@ -311,14 +445,14 @@ model ForbiddenAct {
 // ============================================
 
 model SafeguardProtocol {
-  id               String  @id // natural "SG-01"
-  mechanism        String
-  description      String  @db.Text
-  whenActivated    String
-  responsibleRole  String
-  protocolSteps    String  @db.Text
-  dataTable        String?
-  ordinal          Int
+  id              String  @id // natural "SG-01"
+  mechanism       String
+  description     String  @db.Text
+  whenActivated   String
+  responsibleRole String
+  protocolSteps   String  @db.Text
+  dataTable       String?
+  ordinal         Int
 
   @@index([ordinal])
   @@map("safeguard_protocols")
@@ -331,7 +465,7 @@ model SafeguardProtocol {
 model TaxonomyMeta {
   id           String        @id // key from enum e.g. "N5_HMTC_ITS"
   group        TaxonomyGroup
-  labelId      String        // label Bahasa Indonesia
+  labelId      String // label Bahasa Indonesia
   labelEn      String
   deskripsi    String?       @db.Text
   displayOrder Int
@@ -346,15 +480,15 @@ model TaxonomyMeta {
 // ============================================
 
 model FormInventory {
-  id              String        @id // natural "F-MABA-01"
-  namaForm        String
-  pengisiRole     String
-  frekuensi       FormFrequency
-  estimasiMenit   Int
-  prioritas       FormPriority
-  devicePrimary   String
-  dataTable       String
-  visibility      String
+  id            String        @id // natural "F-MABA-01"
+  namaForm      String
+  pengisiRole   String
+  frekuensi     FormFrequency
+  estimasiMenit Int
+  prioritas     FormPriority
+  devicePrimary String
+  dataTable     String
+  visibility    String
 
   @@index([pengisiRole])
   @@index([prioritas])
@@ -366,12 +500,12 @@ model FormInventory {
 // ============================================
 
 model RolePermission {
-  id       String   @id @default(cuid())
+  id       String  @id @default(cuid())
   role     String
   resource String
   action   String
   scope    String?
-  note     String?  @db.Text
+  note     String? @db.Text
 
   @@unique([role, resource, action, scope])
   @@index([role])

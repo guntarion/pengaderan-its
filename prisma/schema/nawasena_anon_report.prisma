@@ -88,9 +88,9 @@ model AnonReport {
   closedAt         DateTime?
 
   // Notes
-  resolutionNotes String?      @db.Text // internal, not visible to reporter
-  publicNote      String?      @db.VarChar(300) // visible in tracker
-  satgasNotes     String?      @db.Text // parallel Satgas notes, internal only
+  resolutionNotes String? @db.Text // internal, not visible to reporter
+  publicNote      String? @db.VarChar(300) // visible in tracker
+  satgasNotes     String? @db.Text // parallel Satgas notes, internal only
 
   // Overrides audit trail (embedded summary; detail in AccessLog)
   blmCategoryOverride AnonCategory?

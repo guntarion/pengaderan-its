@@ -17,10 +17,10 @@ enum ReviewStatus {
 
 enum PDFStatus {
   NOT_GENERATED // default before finalize
-  PENDING       // render job queued
-  RENDERING     // actively rendering
-  READY         // success, pdfStorageKey set
-  FAILED        // 3 retry exhausted
+  PENDING // render job queued
+  RENDERING // actively rendering
+  READY // success, pdfStorageKey set
+  FAILED // 3 retry exhausted
 }
 
 enum TriwulanSignatureAction {
@@ -29,7 +29,7 @@ enum TriwulanSignatureAction {
   SUBMIT_TO_PEMBINA
   PEMBINA_SIGN
   PEMBINA_REQUEST_REVISION
-  BLM_AUDIT_ITEM_TICK      // per-item tick event (metadata has itemKey + coverage)
+  BLM_AUDIT_ITEM_TICK // per-item tick event (metadata has itemKey + coverage)
   BLM_ACKNOWLEDGE
   BLM_REQUEST_REVISION
   FINALIZE
@@ -54,15 +54,15 @@ enum MuatanWajibKey {
 
 enum MuatanCoverageStatus {
   NOT_ASSESSED // default, before BLM ticks
-  COVERED      // fully covered
-  PARTIAL      // partially covered
-  NOT_COVERED  // not covered at all
+  COVERED // fully covered
+  PARTIAL // partially covered
+  NOT_COVERED // not covered at all
 }
 
 enum TriwulanEscalationLevel {
-  NONE    // no flags
+  NONE // no flags
   WARNING // warning flags only
-  URGENT  // at least one URGENT flag
+  URGENT // at least one URGENT flag
 }
 
 enum EscalationRuleKey {
@@ -80,76 +80,76 @@ enum EscalationRuleKey {
 // ============================================
 
 model TriwulanReview {
-  id                      String                  @id @default(cuid())
-  organizationId          String
-  cohortId                String
-  quarterNumber           Int                     // 1, 2, 3, 4
-  quarterStartDate        DateTime
-  quarterEndDate          DateTime
+  id               String   @id @default(cuid())
+  organizationId   String
+  cohortId         String
+  quarterNumber    Int // 1, 2, 3, 4
+  quarterStartDate DateTime
+  quarterEndDate   DateTime
 
   // Snapshot (frozen at generate time — never updated)
-  dataSnapshotJsonb       Json                    // see 06-model-data.md §5 for shape
-  snapshotVersion         String                  @default("1.0")
-  generatedAt             DateTime                @default(now())
-  generatedById           String                  // SC user who triggered generate
+  dataSnapshotJsonb Json // see 06-model-data.md §5 for shape
+  snapshotVersion   String   @default("1.0")
+  generatedAt       DateTime @default(now())
+  generatedById     String // SC user who triggered generate
 
   // Executive summary (editable by SC in DRAFT state)
-  executiveSummary        String?                 @db.Text
+  executiveSummary String? @db.Text
 
   // State machine
-  status                  ReviewStatus            @default(DRAFT)
-  escalationLevel         TriwulanEscalationLevel @default(NONE)
+  status          ReviewStatus            @default(DRAFT)
+  escalationLevel TriwulanEscalationLevel @default(NONE)
 
   // Revision lineage
-  previousReviewId        String?                 // FK to the review this was revised from
-  supersededByReviewId    String?                 // FK to the review that replaced this one
-  revisionReason          String?                 @db.Text
+  previousReviewId     String? // FK to the review this was revised from
+  supersededByReviewId String? // FK to the review that replaced this one
+  revisionReason       String? @db.Text
 
   // Submission
-  submittedAt             DateTime?
-  submittedById           String?
+  submittedAt   DateTime?
+  submittedById String?
 
   // Pembina sign
   pembinaSignedAt         DateTime?
   pembinaSignedById       String?
-  pembinaNotes            String?                 @db.Text
-  pembinaInPersonReviewed Boolean                 @default(false)
+  pembinaNotes            String?   @db.Text
+  pembinaInPersonReviewed Boolean   @default(false)
 
   // BLM acknowledge
-  blmAcknowledgedAt       DateTime?
-  blmAcknowledgedById     String?
-  blmNotes                String?                 @db.Text
+  blmAcknowledgedAt   DateTime?
+  blmAcknowledgedById String?
+  blmNotes            String?   @db.Text
 
   // Finalize
-  finalizedAt             DateTime?
+  finalizedAt DateTime?
 
   // PDF
-  pdfStatus               PDFStatus               @default(NOT_GENERATED)
-  pdfStorageKey           String?                 // S3 key (generate presigned URL on demand)
-  pdfRenderedAt           DateTime?
-  pdfLastError            String?                 @db.Text
+  pdfStatus     PDFStatus @default(NOT_GENERATED)
+  pdfStorageKey String? // S3 key (generate presigned URL on demand)
+  pdfRenderedAt DateTime?
+  pdfLastError  String?   @db.Text
 
   // Timestamps
-  createdAt               DateTime                @default(now())
-  updatedAt               DateTime                @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations — base models
-  organization            Organization            @relation(fields: [organizationId], references: [id])
-  cohort                  Cohort                  @relation(fields: [cohortId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  cohort       Cohort       @relation(fields: [cohortId], references: [id])
 
   // Relations — named User FKs (multiple FKs to User require named relations)
-  generatedBy             User                    @relation("TRGeneratedBy", fields: [generatedById], references: [id])
-  submittedBy             User?                   @relation("TRSubmittedBy", fields: [submittedById], references: [id])
-  pembinaSignedBy         User?                   @relation("TRPembinaSignedBy", fields: [pembinaSignedById], references: [id])
-  blmAcknowledgedBy       User?                   @relation("TRBLMAckBy", fields: [blmAcknowledgedById], references: [id])
+  generatedBy       User  @relation("TRGeneratedBy", fields: [generatedById], references: [id])
+  submittedBy       User? @relation("TRSubmittedBy", fields: [submittedById], references: [id])
+  pembinaSignedBy   User? @relation("TRPembinaSignedBy", fields: [pembinaSignedById], references: [id])
+  blmAcknowledgedBy User? @relation("TRBLMAckBy", fields: [blmAcknowledgedById], references: [id])
 
   // Revision chain self-relations
-  previousReview          TriwulanReview?         @relation("TRRevisionChain", fields: [previousReviewId], references: [id])
-  revisedByReviews        TriwulanReview[]        @relation("TRRevisionChain")
+  previousReview   TriwulanReview?  @relation("TRRevisionChain", fields: [previousReviewId], references: [id])
+  revisedByReviews TriwulanReview[] @relation("TRRevisionChain")
 
   // Child relations
-  signatureEvents         TriwulanSignatureEvent[]
-  auditSubstansiResults   AuditSubstansiResult[]
+  signatureEvents       TriwulanSignatureEvent[]
+  auditSubstansiResults AuditSubstansiResult[]
 
   // Indexes (partial unique via raw SQL migration)
   @@index([cohortId, quarterNumber, status], name: "tr_cohort_q_status")
@@ -165,21 +165,21 @@ model TriwulanReview {
 // ============================================
 
 model TriwulanSignatureEvent {
-  id              String                    @id @default(cuid())
-  organizationId  String                    // denormalized for RLS (mirrors review.organizationId)
-  reviewId        String
-  actorId         String                    // User who performed action
-  action          TriwulanSignatureAction
-  timestamp       DateTime                  @default(now())
-  ipHash          String                    // SHA256(ip + TRIWULAN_IP_SALT) — no raw IP stored
-  userAgent       String?                   @db.Text
-  notes           String?                   @db.Text
-  metadata        Json?                     // e.g., { itemKey: "NARASI_SEPULUH_NOPEMBER", coverage: "COVERED" } for BLM_AUDIT_ITEM_TICK
+  id             String                  @id @default(cuid())
+  organizationId String // denormalized for RLS (mirrors review.organizationId)
+  reviewId       String
+  actorId        String // User who performed action
+  action         TriwulanSignatureAction
+  timestamp      DateTime                @default(now())
+  ipHash         String // SHA256(ip + TRIWULAN_IP_SALT) — no raw IP stored
+  userAgent      String?                 @db.Text
+  notes          String?                 @db.Text
+  metadata       Json? // e.g., { itemKey: "NARASI_SEPULUH_NOPEMBER", coverage: "COVERED" } for BLM_AUDIT_ITEM_TICK
 
   // Relations
-  organization    Organization              @relation(fields: [organizationId], references: [id])
-  review          TriwulanReview            @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  actor           User                      @relation("TRSignatureEventActor", fields: [actorId], references: [id])
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  review       TriwulanReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  actor        User           @relation("TRSignatureEventActor", fields: [actorId], references: [id])
 
   // Indexes
   @@index([reviewId, timestamp(sort: Desc)], name: "tse_review_timeline")
@@ -193,22 +193,22 @@ model TriwulanSignatureEvent {
 // ============================================
 
 model AuditSubstansiResult {
-  id              String                @id @default(cuid())
-  organizationId  String                // denormalized RLS
-  reviewId        String
-  itemKey         MuatanWajibKey
-  coverage        MuatanCoverageStatus  @default(NOT_ASSESSED)
-  evidenceRef     String?               @db.Text // URL or kegiatan ID
-  notes           String?               @db.Text
+  id             String               @id @default(cuid())
+  organizationId String // denormalized RLS
+  reviewId       String
+  itemKey        MuatanWajibKey
+  coverage       MuatanCoverageStatus @default(NOT_ASSESSED)
+  evidenceRef    String?              @db.Text // URL or kegiatan ID
+  notes          String?              @db.Text
 
-  assessedById    String?               // BLM user who ticked this item
-  assessedAt      DateTime?
-  updatedAt       DateTime              @updatedAt
+  assessedById String? // BLM user who ticked this item
+  assessedAt   DateTime?
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  organization    Organization          @relation(fields: [organizationId], references: [id])
-  review          TriwulanReview        @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  assessedBy      User?                 @relation("TRAssessedBy", fields: [assessedById], references: [id])
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  review       TriwulanReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  assessedBy   User?          @relation("TRAssessedBy", fields: [assessedById], references: [id])
 
   // Unique: 1 result per (reviewId, itemKey) — idempotent upsert
   @@unique([reviewId, itemKey], name: "asr_review_item_unique")

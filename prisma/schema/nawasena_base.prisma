@@ -12,6 +12,20 @@ enum OrganizationStatus {
   PENDING_SETUP
 }
 
+// REVISI MULTI-HMJ — OrganizationType enum
+enum OrganizationType {
+  HMJ // Himpunan Mahasiswa Jurusan (default)
+  ALUMNI_CHAPTER // Chapter alumni HMJ tertentu
+  INSTITUSI_PUSAT // BEM ITS, BLM ITS, DPTSI
+}
+
+// REVISI MULTI-HMJ — OrganizationRegistrationStatus enum (operational gate)
+enum OrganizationRegistrationStatus {
+  PENDING // baru dibuat SUPERADMIN, belum operasional
+  ACTIVE // operasional penuh
+  SUSPENDED // dibekukan sementara
+}
+
 enum CohortStatus {
   DRAFT
   ACTIVE
@@ -25,18 +39,30 @@ enum CohortStatus {
 model Organization {
   id           String             @id @default(cuid())
   code         String             @unique // e.g., "HMTC", "HMM", "HME"
-  name         String             // short name
-  fullName     String             // full legal name
-  facultyCode  String?            // e.g., "FTEIC"
+  name         String // short name
+  fullName     String // full legal name
+  facultyCode  String? // e.g., "FT-EIC" — FK ke Faculty.code (M02 RV-A)
   contactEmail String?
   status       OrganizationStatus @default(ACTIVE)
-  settings     Json?              // per-org config: timezone, locale, email template overrides
+  settings     Json? // per-org config: timezone, locale, email template overrides
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
   archivedAt   DateTime?
 
+  // REVISI MULTI-HMJ — start
+  slug               String                         @unique // URL-friendly, derived dari code (lowercase)
+  organizationType   OrganizationType               @default(HMJ)
+  registrationStatus OrganizationRegistrationStatus @default(PENDING) // operational gate
+  isActive           Boolean                        @default(true) // soft-delete flag
+  kahimaName         String?
+  kajurName          String?
+  // REVISI MULTI-HMJ — end
+
   // M02: Public catalog flag
   publicCatalogEnabled Boolean @default(false)
+
+  // M02 RV-A: Faculty relation (FK hard constraint — Faculty seeded before Organization FK applied)
+  faculty Faculty? @relation("FacultyToOrganization", fields: [facultyCode], references: [code], onDelete: SetNull)
 
   // Relations
   users           User[]
@@ -49,35 +75,35 @@ model Organization {
   kegiatan        Kegiatan[]
 
   // M15 Notification relations
-  notificationRules        NotificationRule[]
-  notificationLogs         NotificationLog[]
-  notificationTemplates    NotificationTemplate[]
-  notificationSubscriptions NotificationSubscription[]
-  notificationPreferences  NotificationPreference[]
+  notificationRules          NotificationRule[]
+  notificationLogs           NotificationLog[]
+  notificationTemplates      NotificationTemplate[]
+  notificationSubscriptions  NotificationSubscription[]
+  notificationPreferences    NotificationPreference[]
   notificationRuleExecutions NotificationRuleExecution[]
 
   // M03 Struktur Angkatan relations
-  kpGroups         KPGroup[]
-  kpGroupMembers   KPGroupMember[]
-  buddyPairs       BuddyPair[]
-  buddyPairMembers BuddyPairMember[]
-  kasuhPairs       KasuhPair[]
-  pairingRequests  PairingRequest[]
+  kpGroups           KPGroup[]
+  kpGroupMembers     KPGroupMember[]
+  buddyPairs         BuddyPair[]
+  buddyPairMembers   BuddyPairMember[]
+  kasuhPairs         KasuhPair[]
+  pairingRequests    PairingRequest[]
   bulkPairingBatches BulkPairingBatch[]
 
   // M04 Pulse & Journal relations
-  pulseChecks      PulseCheck[]    @relation("PulseCheckOrg")
-  journalDrafts    JournalDraft[]  @relation("JournalDraftOrg")
-  journals         Journal[]       @relation("JournalOrg")
-  rubrikScores     RubrikScore[]   @relation("RubrikScoreOrg")
-  redFlagEvents    RedFlagEvent[]  @relation("RedFlagOrg")
-  followUpRecords  FollowUpRecord[] @relation("FollowUpOrg")
+  pulseChecks     PulseCheck[]     @relation("PulseCheckOrg")
+  journalDrafts   JournalDraft[]   @relation("JournalDraftOrg")
+  journals        Journal[]        @relation("JournalOrg")
+  rubrikScores    RubrikScore[]    @relation("RubrikScoreOrg")
+  redFlagEvents   RedFlagEvent[]   @relation("RedFlagOrg")
+  followUpRecords FollowUpRecord[] @relation("FollowUpOrg")
 
   // M05 Passport Digital relations
-  passportEntries       PassportEntry[]
+  passportEntries         PassportEntry[]
   passportEvidenceUploads PassportEvidenceUpload[]
-  passportQrSessions    PassportQrSession[]
-  passportSkemExportLogs PassportSkemExportLog[]
+  passportQrSessions      PassportQrSession[]
+  passportSkemExportLogs  PassportSkemExportLog[]
 
   // M06 Event Instance back-relations
   kegiatanInstances KegiatanInstance[] @relation("OrgKegiatanInstances")
@@ -86,41 +112,44 @@ model Organization {
   attendances       Attendance[]       @relation("OrgAttendances")
 
   // M08 Event Execution back-relations
-  outputUploads         OutputUpload[]        @relation("OrgOutputUploads")
-  kegiatanEvaluations   KegiatanEvaluation[]  @relation("OrgKegiatanEvaluations")
-  kegiatanQRSessions    KegiatanQRSession[]   @relation("OrgKegiatanQRSessions")
+  outputUploads       OutputUpload[]       @relation("OrgOutputUploads")
+  kegiatanEvaluations KegiatanEvaluation[] @relation("OrgKegiatanEvaluations")
+  kegiatanQRSessions  KegiatanQRSession[]  @relation("OrgKegiatanQRSessions")
 
   // M07 Time Capsule & Life Map relations
-  timeCapsuleEntries      TimeCapsuleEntry[]
-  timeCapsuleAttachments  TimeCapsuleAttachment[]
-  lifeMaps                LifeMap[]
-  lifeMapUpdates          LifeMapUpdate[]
+  timeCapsuleEntries     TimeCapsuleEntry[]
+  timeCapsuleAttachments TimeCapsuleAttachment[]
+  lifeMaps               LifeMap[]
+  lifeMapUpdates         LifeMapUpdate[]
 
   // M09 KP & Kasuh Logbook back-relations
-  kpLogDailies    KPLogDaily[]  @relation("KPLogDailyOrg")
-  kpLogWeeklies   KPLogWeekly[] @relation("KPLogWeeklyOrg")
-  kasuhLogs       KasuhLog[]    @relation("KasuhLogOrg")
+  kpLogDailies  KPLogDaily[]  @relation("KPLogDailyOrg")
+  kpLogWeeklies KPLogWeekly[] @relation("KPLogWeeklyOrg")
+  kasuhLogs     KasuhLog[]    @relation("KasuhLogOrg")
 
   // M10 Safeguard & Insiden back-relations
-  safeguardIncidents       SafeguardIncident[]            @relation("OrgSafeguardIncidents")
-  consequenceLogs          ConsequenceLog[]               @relation("OrgConsequenceLogs")
-  incidentTimelineEntries  IncidentTimelineEntry[]        @relation("OrgTimelineEntries")
-  escalationFallbacks      SafeguardEscalationFallback[]  @relation("OrgEscalationFallbacks")
+  safeguardIncidents      SafeguardIncident[]           @relation("OrgSafeguardIncidents")
+  consequenceLogs         ConsequenceLog[]              @relation("OrgConsequenceLogs")
+  incidentTimelineEntries IncidentTimelineEntry[]       @relation("OrgTimelineEntries")
+  escalationFallbacks     SafeguardEscalationFallback[] @relation("OrgEscalationFallbacks")
 
   // M11 Mental Health back-relations
-  mhScreenings             MHScreening[]
-  mhReferralLogs           MHReferralLog[]
+  mhScreenings   MHScreening[]
+  mhReferralLogs MHReferralLog[]
 
   // M13 Dashboard Multi-Role back-relations
-  kpiSignals               KPISignal[]    @relation("KPISignalOrg")
-  redFlagAlerts            RedFlagAlert[] @relation("RedFlagAlertOrg")
+  kpiSignals    KPISignal[]    @relation("KPISignalOrg")
+  redFlagAlerts RedFlagAlert[] @relation("RedFlagAlertOrg")
 
   // M14 Triwulan Review back-relations
-  triwulanReviews           TriwulanReview[]
-  triwulanSignatureEvents   TriwulanSignatureEvent[]
-  auditSubstansiResults     AuditSubstansiResult[]
+  triwulanReviews         TriwulanReview[]
+  triwulanSignatureEvents TriwulanSignatureEvent[]
+  auditSubstansiResults   AuditSubstansiResult[]
 
   @@index([status])
+  @@index([facultyCode]) // REVISI MULTI-HMJ
+  @@index([slug]) // REVISI MULTI-HMJ
+  @@index([isActive, registrationStatus]) // REVISI MULTI-HMJ
   @@map("organizations")
 }
 
@@ -129,23 +158,26 @@ model Organization {
 // ============================================
 
 model Cohort {
-  id             String      @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  code           String      // e.g., "C26", "C27"
-  name           String      // e.g., "NAWASENA 2026"
+  code           String // e.g., "C26", "C27"
+  name           String // e.g., "NAWASENA 2026"
   startDate      DateTime
   endDate        DateTime
   status         CohortStatus @default(DRAFT)
-  isActive       Boolean     @default(false) // at most 1 true per org (partial unique in SQL)
+  isActive       Boolean      @default(false) // at most 1 true per org (partial unique in SQL)
   createdBy      String
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   archivedAt     DateTime?
 
+  // REVISI MULTI-HMJ — per-cohort config: durasi fase, schedule template, plafon biaya, custom flags
+  settings Json @default("{}")
+
   // M07: F2/F4 phase dates for Life Map milestone timing
-  f2StartDate    DateTime?   // fase F2 mulai
-  f2EndDate      DateTime?   // fase F2 selesai
-  f4EndDate      DateTime?   // fase F4 closing (untuk retention Life Map)
+  f2StartDate DateTime? // fase F2 mulai
+  f2EndDate   DateTime? // fase F2 selesai
+  f4EndDate   DateTime? // fase F4 closing (untuk retention Life Map)
 
   // Relations
   organization    Organization     @relation(fields: [organizationId], references: [id])
@@ -155,55 +187,55 @@ model Cohort {
   whitelistEmails WhitelistEmail[] @relation("CohortWhitelist")
 
   // M03 Struktur Angkatan relations
-  kpGroups          KPGroup[]
-  kpGroupMembers    KPGroupMember[]
-  buddyPairs        BuddyPair[]
-  buddyPairMembers  BuddyPairMember[]
-  kasuhPairs        KasuhPair[]
-  pairingRequests   PairingRequest[]
+  kpGroups           KPGroup[]
+  kpGroupMembers     KPGroupMember[]
+  buddyPairs         BuddyPair[]
+  buddyPairMembers   BuddyPairMember[]
+  kasuhPairs         KasuhPair[]
+  pairingRequests    PairingRequest[]
   bulkPairingBatches BulkPairingBatch[]
 
   // M04 Pulse & Journal relations
-  pulseChecks       PulseCheck[]    @relation("CohortPulseChecks")
-  journalDrafts     JournalDraft[]  @relation("CohortJournalDrafts")
-  journals          Journal[]       @relation("CohortJournals")
-  rubrikScores      RubrikScore[]   @relation("CohortRubrikScores")
-  redFlagEvents     RedFlagEvent[]  @relation("CohortRedFlags")
+  pulseChecks   PulseCheck[]   @relation("CohortPulseChecks")
+  journalDrafts JournalDraft[] @relation("CohortJournalDrafts")
+  journals      Journal[]      @relation("CohortJournals")
+  rubrikScores  RubrikScore[]  @relation("CohortRubrikScores")
+  redFlagEvents RedFlagEvent[] @relation("CohortRedFlags")
 
   // M05 Passport Digital relations
-  passportEntries       PassportEntry[]
-  passportQrSessions    PassportQrSession[]
+  passportEntries        PassportEntry[]
+  passportQrSessions     PassportQrSession[]
   passportSkemExportLogs PassportSkemExportLog[]
 
   // M06 Event Instance back-relations
   kegiatanInstances KegiatanInstance[] @relation("CohortKegiatanInstances")
 
   // M07 Time Capsule & Life Map relations
-  timeCapsuleEntries      TimeCapsuleEntry[]
-  timeCapsuleAttachments  TimeCapsuleAttachment[]
-  lifeMaps                LifeMap[]
-  lifeMapUpdates          LifeMapUpdate[]
+  timeCapsuleEntries     TimeCapsuleEntry[]
+  timeCapsuleAttachments TimeCapsuleAttachment[]
+  lifeMaps               LifeMap[]
+  lifeMapUpdates         LifeMapUpdate[]
 
   // M09 KP & Kasuh Logbook back-relations
-  kpLogDailies    KPLogDaily[]  @relation("KPLogDailyCohort")
-  kpLogWeeklies   KPLogWeekly[] @relation("KPLogWeeklyCohort")
-  kasuhLogs       KasuhLog[]    @relation("KasuhLogCohort")
+  kpLogDailies  KPLogDaily[]  @relation("KPLogDailyCohort")
+  kpLogWeeklies KPLogWeekly[] @relation("KPLogWeeklyCohort")
+  kasuhLogs     KasuhLog[]    @relation("KasuhLogCohort")
 
   // M10 Safeguard & Insiden back-relations
-  safeguardIncidents  SafeguardIncident[]  @relation("CohortSafeguardIncidents")
-  consequenceLogs     ConsequenceLog[]     @relation("CohortConsequenceLogs")
+  safeguardIncidents SafeguardIncident[] @relation("CohortSafeguardIncidents")
+  consequenceLogs    ConsequenceLog[]    @relation("CohortConsequenceLogs")
 
   // M11 Mental Health back-relations
-  mhScreenings        MHScreening[]
-  mhConsentRecords    MHConsentRecord[]
-  mhResearchConsents  MHResearchConsent[]
+  mhScreenings       MHScreening[]
+  mhConsentRecords   MHConsentRecord[]
+  mhResearchConsents MHResearchConsent[]
 
   // M13 Dashboard Multi-Role back-relations
-  kpiSignals          KPISignal[]    @relation("KPISignalCohort")
-  redFlagAlerts       RedFlagAlert[] @relation("RedFlagAlertCohort")
+  kpiSignals    KPISignal[]    @relation("KPISignalCohort")
+  redFlagAlerts RedFlagAlert[] @relation("RedFlagAlertCohort")
 
   // M14 Triwulan Review back-relations
-  triwulanReviews     TriwulanReview[]
+  triwulanReviews TriwulanReview[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])

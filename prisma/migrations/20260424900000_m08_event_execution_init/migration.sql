@@ -252,8 +252,8 @@ ALTER TABLE "output_uploads" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY output_upload_org_isolation ON "output_uploads"
   FOR ALL
   USING (
-    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid
-    OR "uploaderId" = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::text
+    OR "uploaderId" = NULLIF(current_setting('app.current_user_id', true), '')::text
     OR current_setting('app.bypass_rls', true) = 'true'
   );
 
@@ -261,8 +261,8 @@ ALTER TABLE "kegiatan_evaluations" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY kegiatan_evaluation_org_isolation ON "kegiatan_evaluations"
   FOR ALL
   USING (
-    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid
-    OR "filledById" = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::text
+    OR "filledById" = NULLIF(current_setting('app.current_user_id', true), '')::text
     OR current_setting('app.bypass_rls', true) = 'true'
   );
 
@@ -270,6 +270,6 @@ ALTER TABLE "kegiatan_qr_sessions" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY kegiatan_qr_session_org_isolation ON "kegiatan_qr_sessions"
   FOR ALL
   USING (
-    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid
+    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::text
     OR current_setting('app.bypass_rls', true) = 'true'
   );

@@ -19,8 +19,8 @@ enum PaktaVersionStatus {
 }
 
 enum PaktaSignatureStatus {
-  ACTIVE      // current valid signature
-  SUPERSEDED  // new version published; record preserved but user must re-sign
+  ACTIVE // current valid signature
+  SUPERSEDED // new version published; record preserved but user must re-sign
 }
 
 // ============================================
@@ -28,35 +28,37 @@ enum PaktaSignatureStatus {
 // ============================================
 
 model PaktaVersion {
-  id             String             @id @default(cuid())
-  organizationId String
-  type           PaktaType
-  versionNumber  Int                // 1, 2, 3, ...
-  title          String             // e.g. "Pakta Panitia NAWASENA 2026 HMTC v1"
-  contentMarkdown String            @db.Text
-  summaryJson    Json?              // { forbidden_acts: [...], commitments: [...], references: [...] }
-  quizQuestions  Json               // { questions: [{ id, question, options, correctAnswerIds }] }
-  passingScore   Int                @default(80)
-  effectiveFrom  DateTime
-  effectiveUntil DateTime?
-  status         PaktaVersionStatus @default(DRAFT)
-  publishedAt    DateTime?
-  publishedBy    String?
-  supersededAt   DateTime?
+  id                    String             @id @default(cuid())
+  organizationId        String? // REVISI MULTI-HMJ: nullable — NULL untuk DIGITAL global, non-null untuk ETIK/SOCIAL_CONTRACT per-org
+  type                  PaktaType
+  versionNumber         Int // 1, 2, 3, ...
+  title                 String // e.g. "Pakta Panitia NAWASENA 2026 HMTC v1"
+  contentMarkdown       String             @db.Text
+  summaryJson           Json? // { forbidden_acts: [...], commitments: [...], references: [...] }
+  quizQuestions         Json // { questions: [{ id, question, options, correctAnswerIds }] }
+  passingScore          Int                @default(80)
+  effectiveFrom         DateTime
+  effectiveUntil        DateTime?
+  status                PaktaVersionStatus @default(DRAFT)
+  publishedAt           DateTime?
+  publishedBy           String?
+  supersededAt          DateTime?
   supersededByVersionId String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
 
   // Relations
-  organization    Organization  @relation(fields: [organizationId], references: [id])
-  publisher       User?         @relation("PaktaPublisher", fields: [publishedBy], references: [id])
-  signatures      PaktaSignature[]
-  rejections      PaktaRejection[]
-  supersededBy    PaktaVersion? @relation("PaktaVersionSupersedes", fields: [supersededByVersionId], references: [id])
-  supersedes      PaktaVersion[] @relation("PaktaVersionSupersedes")
+  organization Organization?    @relation(fields: [organizationId], references: [id]) // REVISI MULTI-HMJ: optional
+  publisher    User?            @relation("PaktaPublisher", fields: [publishedBy], references: [id])
+  signatures   PaktaSignature[]
+  rejections   PaktaRejection[]
+  supersededBy PaktaVersion?    @relation("PaktaVersionSupersedes", fields: [supersededByVersionId], references: [id])
+  supersedes   PaktaVersion[]   @relation("PaktaVersionSupersedes")
 
-  @@unique([organizationId, type, versionNumber])
+  @@unique([organizationId, type, versionNumber]) // Handles per-org uniqueness; partial unique for DIGITAL global added via raw SQL
   @@index([organizationId, type, status])
+  @@index([type, status, organizationId]) // REVISI MULTI-HMJ: lookup active by type globally + org
+  @@index([type, organizationId, status]) // REVISI MULTI-HMJ: lookup active per scope
   @@map("pakta_versions")
 }
 
@@ -65,25 +67,25 @@ model PaktaVersion {
 // ============================================
 
 model PaktaSignature {
-  id              String               @id @default(cuid())
-  organizationId  String
-  userId          String
-  paktaVersionId  String
-  type            PaktaType            // denormalized for fast index
-  cohortId        String?              // cohort context at time of signing
-  signedAt        DateTime             @default(now())
-  ipAddress       String
-  userAgent       String               @db.Text
-  quizScore       Int                  // 0-100
-  attachmentUrl   String?              // optional scan
-  status          PaktaSignatureStatus @default(ACTIVE)
-  supersededAt    DateTime?
+  id             String               @id @default(cuid())
+  organizationId String
+  userId         String
+  paktaVersionId String
+  type           PaktaType // denormalized for fast index
+  cohortId       String? // cohort context at time of signing
+  signedAt       DateTime             @default(now())
+  ipAddress      String
+  userAgent      String               @db.Text
+  quizScore      Int // 0-100
+  attachmentUrl  String? // optional scan
+  status         PaktaSignatureStatus @default(ACTIVE)
+  supersededAt   DateTime?
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id])
-  user         User          @relation(fields: [userId], references: [id])
-  paktaVersion PaktaVersion  @relation(fields: [paktaVersionId], references: [id])
-  cohort       Cohort?       @relation(fields: [cohortId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  paktaVersion PaktaVersion @relation(fields: [paktaVersionId], references: [id])
+  cohort       Cohort?      @relation(fields: [cohortId], references: [id])
 
   @@unique([userId, paktaVersionId])
   @@index([organizationId, type, status])
@@ -97,22 +99,22 @@ model PaktaSignature {
 // ============================================
 
 model PaktaRejection {
-  id               String    @id @default(cuid())
-  organizationId   String
-  userId           String
-  paktaVersionId   String
-  type             PaktaType
-  reason           String    @db.Text // min 20 chars, enforced at app layer
-  rejectedAt       DateTime  @default(now())
-  escalatedToSC    Boolean   @default(false)
-  escalatedAt      DateTime?
-  notes            String?   @db.Text // SC can add follow-up notes
+  id                      String    @id @default(cuid())
+  organizationId          String
+  userId                  String
+  paktaVersionId          String
+  type                    PaktaType
+  reason                  String    @db.Text // min 20 chars, enforced at app layer
+  rejectedAt              DateTime  @default(now())
+  escalatedToSC           Boolean   @default(false)
+  escalatedAt             DateTime?
+  notes                   String?   @db.Text // SC can add follow-up notes
   supersededBySignatureId String? // if user later signs (EC11)
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id])
-  user         User          @relation(fields: [userId], references: [id])
-  paktaVersion PaktaVersion  @relation(fields: [paktaVersionId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  paktaVersion PaktaVersion @relation(fields: [paktaVersionId], references: [id])
 
   @@index([organizationId, userId, type])
   @@index([rejectedAt])

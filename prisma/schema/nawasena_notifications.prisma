@@ -62,7 +62,7 @@ enum SubscriptionStatus {
 // ============================================
 
 model NotificationTemplate {
-  id                String                       @id @default(cuid())
+  id                String               @id @default(cuid())
   templateKey       String
   description       String
   category          NotificationCategory
@@ -70,13 +70,13 @@ model NotificationTemplate {
   activeVersionId   String?
   supportedChannels ChannelType[]
   payloadSchema     Json
-  createdAt         DateTime                     @default(now())
-  updatedAt         DateTime                     @updatedAt
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
   // Relations
-  organization  Organization?                    @relation(fields: [organizationId], references: [id])
-  versions      NotificationTemplateVersion[]    @relation("TemplateVersions")
-  activeVersion NotificationTemplateVersion?     @relation("ActiveVersion", fields: [activeVersionId], references: [id])
+  organization  Organization?                 @relation(fields: [organizationId], references: [id])
+  versions      NotificationTemplateVersion[] @relation("TemplateVersions")
+  activeVersion NotificationTemplateVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id])
 
   @@unique([organizationId, templateKey])
   @@index([templateKey])
@@ -99,14 +99,14 @@ model NotificationTemplateVersion {
   publishedAt DateTime?
 
   // Relations
-  template           NotificationTemplate   @relation("TemplateVersions", fields: [templateId], references: [id])
-  createdBy          User                   @relation("NotificationVersionCreator", fields: [createdById], references: [id])
+  template  NotificationTemplate @relation("TemplateVersions", fields: [templateId], references: [id])
+  createdBy User                 @relation("NotificationVersionCreator", fields: [createdById], references: [id])
 
   // Back-relations for activeVersion
   activeForTemplates NotificationTemplate[] @relation("ActiveVersion")
 
   // Notification logs using this version
-  notificationLogs   NotificationLog[]
+  notificationLogs NotificationLog[]
 
   @@unique([templateId, version])
   @@index([templateId])
@@ -139,10 +139,10 @@ model NotificationRule {
   updatedAt           DateTime             @updatedAt
 
   // Relations
-  organization     Organization?          @relation(fields: [organizationId], references: [id])
-  overridesRule    NotificationRule?      @relation("RuleOverride", fields: [overridesRuleId], references: [id])
-  overriddenBy     NotificationRule[]     @relation("RuleOverride")
-  createdBy        User                   @relation("NotificationRuleCreator", fields: [createdById], references: [id])
+  organization     Organization?               @relation(fields: [organizationId], references: [id])
+  overridesRule    NotificationRule?           @relation("RuleOverride", fields: [overridesRuleId], references: [id])
+  overriddenBy     NotificationRule[]          @relation("RuleOverride")
+  createdBy        User                        @relation("NotificationRuleCreator", fields: [createdById], references: [id])
   executions       NotificationRuleExecution[]
   notificationLogs NotificationLog[]
 
@@ -158,23 +158,23 @@ model NotificationRule {
 // ============================================
 
 model NotificationRuleExecution {
-  id              String               @id @default(cuid())
-  ruleId          String
-  organizationId  String
-  startedAt       DateTime
-  completedAt     DateTime?
-  status          RuleExecutionStatus
-  usersTargeted   Int                  @default(0)
-  usersSent       Int                  @default(0)
-  usersFailed     Int                  @default(0)
-  usersEscalated  Int                  @default(0)
-  triggeredBy     String
-  executionToken  String               @unique
-  errorMessage    String?
+  id             String              @id @default(cuid())
+  ruleId         String
+  organizationId String
+  startedAt      DateTime
+  completedAt    DateTime?
+  status         RuleExecutionStatus
+  usersTargeted  Int                 @default(0)
+  usersSent      Int                 @default(0)
+  usersFailed    Int                 @default(0)
+  usersEscalated Int                 @default(0)
+  triggeredBy    String
+  executionToken String              @unique
+  errorMessage   String?
 
   // Relations
-  rule             NotificationRule    @relation(fields: [ruleId], references: [id])
-  organization     Organization        @relation(fields: [organizationId], references: [id])
+  rule             NotificationRule  @relation(fields: [ruleId], references: [id])
+  organization     Organization      @relation(fields: [organizationId], references: [id])
   notificationLogs NotificationLog[]
 
   @@index([ruleId, startedAt(sort: Desc)])
@@ -209,11 +209,11 @@ model NotificationLog {
   createdAt         DateTime             @default(now())
 
   // Relations
-  organization    Organization               @relation(fields: [organizationId], references: [id])
-  user            User                       @relation("UserNotificationLogs", fields: [userId], references: [id])
+  organization    Organization                @relation(fields: [organizationId], references: [id])
+  user            User                        @relation("UserNotificationLogs", fields: [userId], references: [id])
   templateVersion NotificationTemplateVersion @relation(fields: [templateVersionId], references: [id])
-  rule            NotificationRule?          @relation(fields: [ruleId], references: [id])
-  ruleExecution   NotificationRuleExecution? @relation(fields: [ruleExecutionId], references: [id])
+  rule            NotificationRule?           @relation(fields: [ruleId], references: [id])
+  ruleExecution   NotificationRuleExecution?  @relation(fields: [ruleExecutionId], references: [id])
 
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
@@ -257,15 +257,15 @@ model NotificationSubscription {
 // ============================================
 
 model NotificationPreference {
-  userId          String    @id
-  organizationId  String
-  pushEnabled     Boolean   @default(true)
-  emailEnabled    Boolean   @default(true)
-  whatsappEnabled Boolean   @default(false)
-  digestMode      String    @default("IMMEDIATE")
-  emailBouncedAt  DateTime?
-  unsubscribeToken String   @unique
-  updatedAt       DateTime  @updatedAt
+  userId           String    @id
+  organizationId   String
+  pushEnabled      Boolean   @default(true)
+  emailEnabled     Boolean   @default(true)
+  whatsappEnabled  Boolean   @default(false)
+  digestMode       String    @default("IMMEDIATE")
+  emailBouncedAt   DateTime?
+  unsubscribeToken String    @unique
+  updatedAt        DateTime  @updatedAt
 
   // Relations
   user         User         @relation("UserNotificationPreference", fields: [userId], references: [id])

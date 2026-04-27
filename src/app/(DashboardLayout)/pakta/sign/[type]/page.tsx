@@ -4,6 +4,15 @@
  * /pakta/sign/[type]
  * Pakta signing — Step 1: Read document + 3 acknowledgment checkboxes.
  *
+ * Dual-scope (RV-D):
+ *   SOCIAL_CONTRACT_MABA → fetches DIGITAL global (organizationId IS NULL)
+ *   PAKTA_PANITIA / PAKTA_PENGADER_2027 → fetches ETIK per-org
+ *   Both handled transparently by /api/pakta/current dual-scope service.
+ *
+ * Scope badge shown in header:
+ *   SOCIAL_CONTRACT_MABA → "Pakta Institusi" (Globe icon)
+ *   PAKTA_PANITIA / PAKTA_PENGADER_2027 → "Pakta [OrgName]" (Building icon)
+ *
  * Query params:
  *   versionId — PaktaVersion ID to sign (fetched from server if not provided)
  *
@@ -15,7 +24,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { PaktaReader } from '@/components/pakta/PaktaReader';
 import { PaktaCheckboxConfirm } from '@/components/pakta/PaktaCheckboxConfirm';
 import { SkeletonPageHeader, SkeletonText } from '@/components/shared/skeletons';
-import { FileSignature } from 'lucide-react';
+import { FileSignature, Globe, Building2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';
 
@@ -25,8 +34,30 @@ type PaktaType = 'PAKTA_PANITIA' | 'SOCIAL_CONTRACT_MABA' | 'PAKTA_PENGADER_2027
 
 const TYPE_LABELS: Record<PaktaType, string> = {
   PAKTA_PANITIA: 'Pakta Panitia',
-  SOCIAL_CONTRACT_MABA: 'Social Contract MABA',
+  SOCIAL_CONTRACT_MABA: 'Pakta MABA',
   PAKTA_PENGADER_2027: 'Pakta Pengader 2027',
+};
+
+// Scope indicator per type
+const SCOPE_CONFIG: Record<
+  PaktaType,
+  { label: string; badgeClass: string; isDigital: boolean }
+> = {
+  SOCIAL_CONTRACT_MABA: {
+    label: 'Pakta Institusi',
+    badgeClass: 'bg-blue-500/20 text-blue-100 border-blue-300/30',
+    isDigital: true,
+  },
+  PAKTA_PANITIA: {
+    label: 'Pakta HMJ Anda',
+    badgeClass: 'bg-violet-500/20 text-violet-100 border-violet-300/30',
+    isDigital: false,
+  },
+  PAKTA_PENGADER_2027: {
+    label: 'Pakta HMJ Anda',
+    badgeClass: 'bg-violet-500/20 text-violet-100 border-violet-300/30',
+    isDigital: false,
+  },
 };
 
 interface PaktaVersionData {
@@ -36,6 +67,7 @@ interface PaktaVersionData {
   contentMarkdown: string;
   versionNumber: number;
   passingScore: number;
+  organizationId: string | null;
 }
 
 export default function PaktaSignPage() {
@@ -76,7 +108,6 @@ export default function PaktaSignPage() {
 
   const handleConfirmed = () => {
     if (!version) return;
-    // Navigate to quiz page with versionId in URL
     router.push(
       `/pakta/sign/${type}/quiz?versionId=${version.id}&passingScore=${version.passingScore}`
     );
@@ -84,6 +115,8 @@ export default function PaktaSignPage() {
 
   const typedType = type as PaktaType;
   const label = TYPE_LABELS[typedType] ?? type;
+  const scopeConfig = SCOPE_CONFIG[typedType];
+  const ScopeIcon = scopeConfig?.isDigital ? Globe : Building2;
 
   if (isLoading) {
     return (
@@ -118,8 +151,20 @@ export default function PaktaSignPage() {
             <div className="rounded-xl bg-white/20 p-2.5">
               <FileSignature className="h-6 w-6" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold">{label}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl font-bold">{label}</h1>
+                {/* Scope badge */}
+                {scopeConfig && (
+                  <span className={[
+                    'flex items-center gap-1 text-xs border rounded-full px-2 py-0.5',
+                    scopeConfig.badgeClass,
+                  ].join(' ')}>
+                    <ScopeIcon className="h-3 w-3" />
+                    {scopeConfig.label}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-sky-100 mt-0.5">
                 {version.title} · Versi {version.versionNumber}
               </p>

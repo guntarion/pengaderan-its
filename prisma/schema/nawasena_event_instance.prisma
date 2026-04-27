@@ -11,23 +11,23 @@
 // ============================================
 
 enum InstanceStatus {
-  PLANNED    // Instance ready, accepts RSVP
-  RUNNING    // Event sedang berlangsung (RSVP closed, NPS not yet)
-  DONE       // Event selesai, NPS window active (up to 7 days)
-  CANCELLED  // Event dibatalkan (RSVP notified, NPS disabled)
+  PLANNED // Instance ready, accepts RSVP
+  RUNNING // Event sedang berlangsung (RSVP closed, NPS not yet)
+  DONE // Event selesai, NPS window active (up to 7 days)
+  CANCELLED // Event dibatalkan (RSVP notified, NPS disabled)
 }
 
 enum RSVPStatus {
-  CONFIRMED  // Slot secured
-  WAITLIST   // Waitlist, FIFO by respondedAt
-  DECLINED   // User cancelled
+  CONFIRMED // Slot secured
+  WAITLIST // Waitlist, FIFO by respondedAt
+  DECLINED // User cancelled
 }
 
 enum AttendanceStatus {
-  HADIR  // Present
-  IZIN   // Excused (permission granted)
-  SAKIT  // Excused (sick)
-  ALPA   // Absent without permission
+  HADIR // Present
+  IZIN // Excused (permission granted)
+  SAKIT // Excused (sick)
+  ALPA // Absent without permission
 }
 
 // ============================================
@@ -35,32 +35,32 @@ enum AttendanceStatus {
 // ============================================
 
 model KegiatanInstance {
-  id              String         @id @default(uuid())
-  kegiatanId      String         // FK → Kegiatan.id (natural ID e.g. "K4.05")
-  cohortId        String         // FK → Cohort
-  organizationId  String         // FK → Organization (denormalized for RLS)
-  scheduledAt     DateTime       // UTC scheduled start
-  executedAt      DateTime?      // UTC actual execution (set when OC marks DONE)
-  location        String         @db.VarChar(500) // physical or online link
-  capacity        Int?           // null = unlimited; max 10000 via CHECK
-  status          InstanceStatus @default(PLANNED)
-  notesPanitia    String?        @db.Text // internal OC+SC notes
-  materiLinkUrl   String?        // pre-read / materi link
-  picRoleHint     String?        // denormalized PIC hint from Kegiatan or override
-  npsRequestedAt  DateTime?      // marker for NPS trigger dedupe
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id             String         @id @default(uuid())
+  kegiatanId     String // FK → Kegiatan.id (natural ID e.g. "K4.05")
+  cohortId       String // FK → Cohort
+  organizationId String // FK → Organization (denormalized for RLS)
+  scheduledAt    DateTime // UTC scheduled start
+  executedAt     DateTime? // UTC actual execution (set when OC marks DONE)
+  location       String         @db.VarChar(500) // physical or online link
+  capacity       Int? // null = unlimited; max 10000 via CHECK
+  status         InstanceStatus @default(PLANNED)
+  notesPanitia   String?        @db.Text // internal OC+SC notes
+  materiLinkUrl  String? // pre-read / materi link
+  picRoleHint    String? // denormalized PIC hint from Kegiatan or override
+  npsRequestedAt DateTime? // marker for NPS trigger dedupe
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   // M08: Optimistic locking + cancellation + reschedule + aggregate cache
-  version                  Int       @default(0)
-  cancelledAt              DateTime?
-  cancelledById            String?
-  cancellationReason       String?   @db.Text
-  rescheduleCount          Int       @default(0)
-  lastRescheduledAt        DateTime?
-  lastRescheduledById      String?
-  cachedAggregateJson      Json?     // { attendancePct, npsScore, npsN, computedAt }
-  notificationFailedCount  Int       @default(0)
+  version                 Int       @default(0)
+  cancelledAt             DateTime?
+  cancelledById           String?
+  cancellationReason      String?   @db.Text
+  rescheduleCount         Int       @default(0)
+  lastRescheduledAt       DateTime?
+  lastRescheduledById     String?
+  cachedAggregateJson     Json? // { attendancePct, npsScore, npsN, computedAt }
+  notificationFailedCount Int       @default(0)
   // locationLatLng: reserved for geo-fence V2, Unsupported type — omitted from Prisma schema
   // raw SQL: ALTER TABLE kegiatan_instances ADD COLUMN location_lat_lng geography(Point, 4326)
 
@@ -73,11 +73,11 @@ model KegiatanInstance {
   npsEntries   EventNPS[]   @relation("InstanceNPS")
 
   // M08 back-relations
-  cancelledBy        User?                @relation("KegiatanInstanceCancelledBy", fields: [cancelledById], references: [id])
-  lastRescheduledBy  User?                @relation("KegiatanInstanceRescheduledBy", fields: [lastRescheduledById], references: [id])
-  outputs            OutputUpload[]       @relation("InstanceOutputs")
-  evaluation         KegiatanEvaluation?  @relation("InstanceEvaluation")
-  qrSessions         KegiatanQRSession[]  @relation("InstanceQRSessions")
+  cancelledBy       User?               @relation("KegiatanInstanceCancelledBy", fields: [cancelledById], references: [id])
+  lastRescheduledBy User?               @relation("KegiatanInstanceRescheduledBy", fields: [lastRescheduledById], references: [id])
+  outputs           OutputUpload[]      @relation("InstanceOutputs")
+  evaluation        KegiatanEvaluation? @relation("InstanceEvaluation")
+  qrSessions        KegiatanQRSession[] @relation("InstanceQRSessions")
 
   @@index([organizationId, cohortId, status, scheduledAt])
   @@index([cohortId, status, scheduledAt])
@@ -85,7 +85,7 @@ model KegiatanInstance {
   @@index([status, executedAt])
   @@index([organizationId, status, scheduledAt])
   @@index([organizationId, status, executedAt]) // M08: evaluation overdue cron
-  @@index([cancelledAt])                         // M08: analytics
+  @@index([cancelledAt]) // M08: analytics
   @@map("kegiatan_instances")
 }
 
@@ -94,17 +94,17 @@ model KegiatanInstance {
 // ============================================
 
 model RSVP {
-  id             String     @id @default(uuid())
-  instanceId     String     // FK → KegiatanInstance
-  userId         String     // FK → User
-  organizationId String     // FK → Organization (denormalized for RLS)
-  status         RSVPStatus
-  respondedAt    DateTime   @default(now()) // updated on each status change; basis FIFO
-  cancelledAt    DateTime?  // set when DECLINED
-  promotedAt     DateTime?  // set when promoted from WAITLIST to CONFIRMED
-  waitlistPosition Int?     // position in waitlist (null when CONFIRMED or DECLINED)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id               String     @id @default(uuid())
+  instanceId       String // FK → KegiatanInstance
+  userId           String // FK → User
+  organizationId   String // FK → Organization (denormalized for RLS)
+  status           RSVPStatus
+  respondedAt      DateTime   @default(now()) // updated on each status change; basis FIFO
+  cancelledAt      DateTime? // set when DECLINED
+  promotedAt       DateTime? // set when promoted from WAITLIST to CONFIRMED
+  waitlistPosition Int? // position in waitlist (null when CONFIRMED or DECLINED)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   // Relations
   instance     KegiatanInstance @relation("InstanceRSVPs", fields: [instanceId], references: [id], onDelete: Cascade)
@@ -124,12 +124,12 @@ model RSVP {
 
 model EventNPS {
   id             String   @id @default(uuid())
-  instanceId     String   // FK → KegiatanInstance
-  userId         String   // FK → User
-  organizationId String   // FK → Organization (denormalized for RLS)
-  npsScore       Int      // 0-10 (CHECK constraint in migration)
-  feltSafe       Int      // 1-5 (CHECK constraint in migration)
-  meaningful     Int      // 1-5 (CHECK constraint in migration)
+  instanceId     String // FK → KegiatanInstance
+  userId         String // FK → User
+  organizationId String // FK → Organization (denormalized for RLS)
+  npsScore       Int // 0-10 (CHECK constraint in migration)
+  feltSafe       Int // 1-5 (CHECK constraint in migration)
+  meaningful     Int // 1-5 (CHECK constraint in migration)
   comment        String?  @db.Text // max 500 chars, optional
   recordedAt     DateTime @default(now())
   createdAt      DateTime @default(now())
@@ -155,25 +155,25 @@ model EventNPS {
 
 model Attendance {
   id             String           @id @default(uuid())
-  instanceId     String           // FK → KegiatanInstance
-  userId         String           // FK → User
-  organizationId String           // FK → Organization (denormalized for RLS)
+  instanceId     String // FK → KegiatanInstance
+  userId         String // FK → User
+  organizationId String // FK → Organization (denormalized for RLS)
   status         AttendanceStatus
   notedAt        DateTime         @default(now())
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   // M08: Extended fields (all additive — nullable or with defaults)
-  notedById      String?          // FK → User (OC actor; null = self-scan by Maba)
-  scanMethod     ScanMethod       @default(MANUAL)
-  scannedAt      DateTime?        // client-side scan timestamp (may differ from notedAt)
-  scanLocation   String?          @db.VarChar(500) // free text "Pintu utama" or lat,lng
-  clientScanId   String?          @db.VarChar(36) // UUID v4 for offline idempotency; partial unique in SQL
-  qrSessionId    String?          // FK → KegiatanQRSession (null for non-QR methods)
-  isWalkin       Boolean          @default(false) // true = scanned without RSVP CONFIRMED
-  notes          String?          @db.Text        // max 200 chars enforced via CHECK in SQL
-  verifiedAt     DateTime?        // reserved M07 verifier flow
-  verifierId     String?          // FK → User (reserved M07)
+  notedById    String? // FK → User (OC actor; null = self-scan by Maba)
+  scanMethod   ScanMethod @default(MANUAL)
+  scannedAt    DateTime? // client-side scan timestamp (may differ from notedAt)
+  scanLocation String?    @db.VarChar(500) // free text "Pintu utama" or lat,lng
+  clientScanId String?    @db.VarChar(36) // UUID v4 for offline idempotency; partial unique in SQL
+  qrSessionId  String? // FK → KegiatanQRSession (null for non-QR methods)
+  isWalkin     Boolean    @default(false) // true = scanned without RSVP CONFIRMED
+  notes        String?    @db.Text // max 200 chars enforced via CHECK in SQL
+  verifiedAt   DateTime? // reserved M07 verifier flow
+  verifierId   String? // FK → User (reserved M07)
 
   // Relations (core)
   instance     KegiatanInstance @relation("InstanceAttendances", fields: [instanceId], references: [id], onDelete: Cascade)
@@ -181,16 +181,16 @@ model Attendance {
   organization Organization     @relation("OrgAttendances", fields: [organizationId], references: [id], onDelete: Restrict)
 
   // M08: Extended relations
-  notedBy    User?              @relation("AttendanceNotedBy", fields: [notedById], references: [id])
-  qrSession  KegiatanQRSession? @relation("AttendanceQRSession", fields: [qrSessionId], references: [id])
-  verifier   User?              @relation("AttendanceVerifier", fields: [verifierId], references: [id])
+  notedBy   User?              @relation("AttendanceNotedBy", fields: [notedById], references: [id])
+  qrSession KegiatanQRSession? @relation("AttendanceQRSession", fields: [qrSessionId], references: [id])
+  verifier  User?              @relation("AttendanceVerifier", fields: [verifierId], references: [id])
 
   @@unique([instanceId, userId])
   @@index([instanceId, status])
   @@index([userId, status, notedAt(sort: Desc)])
   @@index([organizationId, instanceId])
-  @@index([qrSessionId, status])         // M08: per-session scan analytics
-  @@index([instanceId, scanMethod])      // M08: bulk vs scan ratio
-  @@index([instanceId, isWalkin])        // M08: walkin filter
+  @@index([qrSessionId, status]) // M08: per-session scan analytics
+  @@index([instanceId, scanMethod]) // M08: bulk vs scan ratio
+  @@index([instanceId, isWalkin]) // M08: walkin filter
   @@map("attendances")
 }

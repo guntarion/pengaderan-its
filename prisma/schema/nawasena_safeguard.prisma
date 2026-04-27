@@ -95,73 +95,73 @@ enum EscalationTarget {
 // ============================================
 
 model SafeguardIncident {
-  id             String           @id @default(cuid())
+  id             String  @id @default(cuid())
   organizationId String
   cohortId       String
-  kpGroupId      String?          // nullable — context group-level incident from M03
+  kpGroupId      String? // nullable — context group-level incident from M03
 
   // Classification
-  type           IncidentType
-  severity       IncidentSeverity
-  status         IncidentStatus   @default(OPEN)
+  type     IncidentType
+  severity IncidentSeverity
+  status   IncidentStatus   @default(OPEN)
 
   // Timing
-  occurredAt     DateTime
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  occurredAt DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Narrative
-  actionTaken    String?          @db.Text
+  actionTaken String? @db.Text
 
   // Affected / Reported
-  affectedUserId               String?
-  additionalAffectedUserIds    String[]  @default([])
-  reportedById                 String
+  affectedUserId            String?
+  additionalAffectedUserIds String[] @default([])
+  reportedById              String
 
   // Claim / Resolution
   claimedById    String?
   claimedAt      DateTime?
   resolvedById   String?
   resolvedAt     DateTime?
-  resolutionNote String?          @db.Text  // min 30 chars when RESOLVED
+  resolutionNote String?   @db.Text // min 30 chars when RESOLVED
 
   // Escalation
   escalatedTo      EscalationTarget?
   escalatedById    String?
   escalatedAt      DateTime?
-  escalationReason String?          @db.Text  // min 50 chars
+  escalationReason String?           @db.Text // min 50 chars
   satgasTicketRef  String?
   satgasPdfKey     String?
 
   // Attachments
-  attachmentKeys   String[]         @default([])  // S3 keys, max 3
+  attachmentKeys String[] @default([]) // S3 keys, max 3
 
   // Retraction
-  retractedAt       DateTime?
-  retractedById     String?
-  retractionReason  String?          @db.Text
+  retractedAt      DateTime?
+  retractedById    String?
+  retractionReason String?   @db.Text
 
   // Pembina annotations (append-only in app layer)
-  pembinaAnnotations Json?  // array of { pembinaId, note, createdAt }
+  pembinaAnnotations Json? // array of { pembinaId, note, createdAt }
 
   // Flexible metadata: source, kpLogDailyId, anecdote, etc.
-  notes             Json?
+  notes Json?
 
   // ---- Relations ----
-  organization  Organization   @relation("OrgSafeguardIncidents", fields: [organizationId], references: [id])
-  cohort        Cohort         @relation("CohortSafeguardIncidents", fields: [cohortId], references: [id])
-  kpGroup       KPGroup?       @relation("KPGroupSafeguardIncidents", fields: [kpGroupId], references: [id])
+  organization Organization @relation("OrgSafeguardIncidents", fields: [organizationId], references: [id])
+  cohort       Cohort       @relation("CohortSafeguardIncidents", fields: [cohortId], references: [id])
+  kpGroup      KPGroup?     @relation("KPGroupSafeguardIncidents", fields: [kpGroupId], references: [id])
 
   // Multi-relation to User — explicit names required
-  affectedUser  User?          @relation("IncidentAffected", fields: [affectedUserId], references: [id])
-  reportedBy    User           @relation("IncidentReporter", fields: [reportedById], references: [id])
-  claimedBy     User?          @relation("IncidentClaimer", fields: [claimedById], references: [id])
-  resolvedBy    User?          @relation("IncidentResolver", fields: [resolvedById], references: [id])
-  escalatedBy   User?          @relation("IncidentEscalator", fields: [escalatedById], references: [id])
-  retractedBy   User?          @relation("IncidentRetractor", fields: [retractedById], references: [id])
+  affectedUser User? @relation("IncidentAffected", fields: [affectedUserId], references: [id])
+  reportedBy   User  @relation("IncidentReporter", fields: [reportedById], references: [id])
+  claimedBy    User? @relation("IncidentClaimer", fields: [claimedById], references: [id])
+  resolvedBy   User? @relation("IncidentResolver", fields: [resolvedById], references: [id])
+  escalatedBy  User? @relation("IncidentEscalator", fields: [escalatedById], references: [id])
+  retractedBy  User? @relation("IncidentRetractor", fields: [retractedById], references: [id])
 
-  timeline         IncidentTimelineEntry[]
-  consequenceLogs  ConsequenceLog[]
+  timeline            IncidentTimelineEntry[]
+  consequenceLogs     ConsequenceLog[]
   escalationFallbacks SafeguardEscalationFallback[]
 
   @@index([organizationId, status, severity])
@@ -179,50 +179,50 @@ model SafeguardIncident {
 // ============================================
 
 model ConsequenceLog {
-  id             String             @id @default(cuid())
-  organizationId String
-  cohortId       String
-  userId         String             // target maba/KP
-  type           ConsequenceType
-  reasonText     String             @db.Text  // min 30 chars
-  forbiddenActCode String?          // optional reference to forbidden_acts.csv
+  id               String          @id @default(cuid())
+  organizationId   String
+  cohortId         String
+  userId           String // target maba/KP
+  type             ConsequenceType
+  reasonText       String          @db.Text // min 30 chars
+  forbiddenActCode String? // optional reference to forbidden_acts.csv
 
-  relatedIncidentId String?         // optional link to SafeguardIncident
+  relatedIncidentId String? // optional link to SafeguardIncident
   assignedById      String
-  assignedAt        DateTime        @default(now())
-  deadline          DateTime?       // required for REFLEKSI/PRESENTASI/TUGAS_PENGABDIAN
+  assignedAt        DateTime  @default(now())
+  deadline          DateTime? // required for REFLEKSI/PRESENTASI/TUGAS_PENGABDIAN
 
-  status         ConsequenceStatus  @default(ASSIGNED)
-  submittedAt    DateTime?
-  notesAfter     String?            @db.Text  // maba submission text
-  attachmentKey  String?            // S3 key for submission file
+  status        ConsequenceStatus @default(ASSIGNED)
+  submittedAt   DateTime?
+  notesAfter    String?           @db.Text // maba submission text
+  attachmentKey String? // S3 key for submission file
 
-  reviewedById   String?
-  reviewedAt     DateTime?
-  reviewNote     String?            @db.Text
-  completedAt    DateTime?
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?   @db.Text
+  completedAt  DateTime?
 
   // POIN_PASSPORT_DIKURANGI specific
-  pointsDeducted       Int?
+  pointsDeducted        Int?
   passportCascadeStatus PassportCascadeStatus @default(NOT_APPLICABLE)
-  passportCascadeError  String?     @db.Text
-  passportEntryId       String?     // M05 PassportEntry.id reference after APPLIED
+  passportCascadeError  String?               @db.Text
+  passportEntryId       String? // M05 PassportEntry.id reference after APPLIED
 
   // Cancellation
-  cancelledAt    DateTime?
-  cancelledById  String?
-  cancelReason   String?            @db.Text
+  cancelledAt   DateTime?
+  cancelledById String?
+  cancelReason  String?   @db.Text
 
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---- Relations ----
-  organization   Organization       @relation("OrgConsequenceLogs", fields: [organizationId], references: [id])
-  cohort         Cohort             @relation("CohortConsequenceLogs", fields: [cohortId], references: [id])
-  user           User               @relation("ConsequenceTarget", fields: [userId], references: [id])
-  assignedBy     User               @relation("ConsequenceAssigner", fields: [assignedById], references: [id])
-  reviewedBy     User?              @relation("ConsequenceReviewer", fields: [reviewedById], references: [id])
-  cancelledBy    User?              @relation("ConsequenceCanceller", fields: [cancelledById], references: [id])
+  organization    Organization       @relation("OrgConsequenceLogs", fields: [organizationId], references: [id])
+  cohort          Cohort             @relation("CohortConsequenceLogs", fields: [cohortId], references: [id])
+  user            User               @relation("ConsequenceTarget", fields: [userId], references: [id])
+  assignedBy      User               @relation("ConsequenceAssigner", fields: [assignedById], references: [id])
+  reviewedBy      User?              @relation("ConsequenceReviewer", fields: [reviewedById], references: [id])
+  cancelledBy     User?              @relation("ConsequenceCanceller", fields: [cancelledById], references: [id])
   relatedIncident SafeguardIncident? @relation(fields: [relatedIncidentId], references: [id])
 
   @@index([organizationId, userId, status])
@@ -238,25 +238,25 @@ model ConsequenceLog {
 // ============================================
 
 model IncidentTimelineEntry {
-  id             String         @id @default(cuid())
-  organizationId String         // denormalized for RLS + fast query
+  id             String @id @default(cuid())
+  organizationId String // denormalized for RLS + fast query
   incidentId     String
   actorId        String
 
-  action         TimelineAction
-  oldValue       Json?          // state before (STATUS_CHANGED, FIELD_UPDATED)
-  newValue       Json?          // state after or new payload
-  fieldName      String?        // for FIELD_UPDATED: which field changed
-  noteText       String?        @db.Text  // for NOTE_ADDED, PEMBINA_ANNOTATION_ADDED
+  action    TimelineAction
+  oldValue  Json? // state before (STATUS_CHANGED, FIELD_UPDATED)
+  newValue  Json? // state after or new payload
+  fieldName String? // for FIELD_UPDATED: which field changed
+  noteText  String?        @db.Text // for NOTE_ADDED, PEMBINA_ANNOTATION_ADDED
 
-  ipAddress      String?
-  userAgent      String?        @db.Text
-  createdAt      DateTime       @default(now())
+  ipAddress String?
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
 
   // ---- Relations ----
-  organization  Organization    @relation("OrgTimelineEntries", fields: [organizationId], references: [id])
-  incident      SafeguardIncident @relation(fields: [incidentId], references: [id])
-  actor         User            @relation("TimelineActor", fields: [actorId], references: [id])
+  organization Organization      @relation("OrgTimelineEntries", fields: [organizationId], references: [id])
+  incident     SafeguardIncident @relation(fields: [incidentId], references: [id])
+  actor        User              @relation("TimelineActor", fields: [actorId], references: [id])
 
   @@index([incidentId, createdAt])
   @@index([organizationId, createdAt(sort: Desc)])
@@ -270,21 +270,21 @@ model IncidentTimelineEntry {
 // ============================================
 
 model SafeguardEscalationFallback {
-  id              String       @id @default(cuid())
-  organizationId  String
-  incidentId      String
-  receiverUserId  String
+  id             String @id @default(cuid())
+  organizationId String
+  incidentId     String
+  receiverUserId String
 
-  channel         ChannelType
-  status          String       // SENT | FAILED
-  attemptedAt     DateTime     @default(now())
-  errorMessage    String?      @db.Text
-  m15Attempted    Boolean      // true = fallback because M15 failed; false = feature flag off
+  channel      ChannelType
+  status       String // SENT | FAILED
+  attemptedAt  DateTime    @default(now())
+  errorMessage String?     @db.Text
+  m15Attempted Boolean // true = fallback because M15 failed; false = feature flag off
 
   // ---- Relations ----
-  organization  Organization   @relation("OrgEscalationFallbacks", fields: [organizationId], references: [id])
-  incident      SafeguardIncident @relation(fields: [incidentId], references: [id])
-  receiver      User           @relation("EscalationFallbackReceiver", fields: [receiverUserId], references: [id])
+  organization Organization      @relation("OrgEscalationFallbacks", fields: [organizationId], references: [id])
+  incident     SafeguardIncident @relation(fields: [incidentId], references: [id])
+  receiver     User              @relation("EscalationFallbackReceiver", fields: [receiverUserId], references: [id])
 
   @@index([organizationId, attemptedAt(sort: Desc)])
   @@index([incidentId])

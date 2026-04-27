@@ -340,3 +340,44 @@ export const rolePermissionRowSchema = z.object({
 });
 
 export type RolePermissionRow = z.infer<typeof rolePermissionRowSchema>;
+
+// ============================================
+// REVISI M02 RV-A — New schemas
+// ============================================
+
+const RumpunKeilmuanEnum = z.enum([
+  'SAINS', 'TEKNIK', 'PERENCANAAN', 'KELAUTAN',
+  'ELEKTRO_IT', 'KREATIF_BISNIS', 'VOKASI', 'KEDOKTERAN',
+]);
+
+const FacultyCodeEnum = z.enum([
+  'FSAD', 'FTIRS', 'FT-SPK', 'FTK', 'FT-EIC', 'FDKBD', 'FV', 'FKK',
+]);
+
+// Helper: pipe-separated string → string[]
+const pipeSeparated = z.string().transform((val) => {
+  const trimmed = val.trim();
+  if (!trimmed || trimmed === '-') return [];
+  return trimmed.split('|').map((s) => s.trim()).filter(Boolean);
+});
+
+// ============================================
+// core/faculty.csv
+// Columns: code,name,rumpun,profession_associations,notes
+// ============================================
+
+export const facultyRowSchema = z.object({
+  code: FacultyCodeEnum,
+  name: z.string().min(1),
+  rumpun: RumpunKeilmuanEnum,
+  profession_associations: pipeSeparated,
+  notes: optionalText.optional(),
+}).transform((row) => ({
+  code: row.code,
+  name: row.name,
+  rumpun: row.rumpun as z.infer<typeof RumpunKeilmuanEnum>,
+  professionAssociations: row.profession_associations,
+  notes: row.notes,
+}));
+
+export type FacultyRow = z.infer<typeof facultyRowSchema>;

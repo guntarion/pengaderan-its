@@ -20,27 +20,27 @@ enum AiOperationType {
 
 // Monthly aggregate AI usage per user
 model AIUsage {
-  id                 String   @id @default(cuid())
-  userId             String
-  year               Int
-  month              Int      // 1-12
-  operationCount     Int      @default(0)
-  limit              Int      @default(300)
+  id             String @id @default(cuid())
+  userId         String
+  year           Int
+  month          Int // 1-12
+  operationCount Int    @default(0)
+  limit          Int    @default(300)
 
   // Breakdown by operation category
-  chatMessages       Int      @default(0)
-  textOperations     Int      @default(0)
-  analysisOperations Int      @default(0)
-  visionOperations   Int      @default(0)
-  otherOperations    Int      @default(0)
+  chatMessages       Int @default(0)
+  textOperations     Int @default(0)
+  analysisOperations Int @default(0)
+  visionOperations   Int @default(0)
+  otherOperations    Int @default(0)
 
   // Cost tracking (USD)
-  totalTokensUsed    Int      @default(0)
-  totalCostUSD       Float    @default(0)
-  totalInputTokens   Int      @default(0)
-  totalOutputTokens  Int      @default(0)
+  totalTokensUsed   Int   @default(0)
+  totalCostUSD      Float @default(0)
+  totalInputTokens  Int   @default(0)
+  totalOutputTokens Int   @default(0)
 
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, year, month])
   @@map("ai_usage")
@@ -48,22 +48,22 @@ model AIUsage {
 
 // Per-operation log for detailed tracking and cost auditing
 model AIOperationLog {
-  id            String           @id @default(cuid())
+  id            String          @id @default(cuid())
   userId        String
   operationType AiOperationType
-  cost          Int              @default(1)   // Credits consumed
+  cost          Int             @default(1) // Credits consumed
   aiProvider    String?
   modelUsed     String?
   tokensUsed    Int?
-  responseTime  Int?             // milliseconds
+  responseTime  Int? // milliseconds
   costUSD       Float?
   inputTokens   Int?
   outputTokens  Int?
-  success       Boolean          @default(true)
+  success       Boolean         @default(true)
   errorMessage  String?
-  createdAt     DateTime         @default(now())
+  createdAt     DateTime        @default(now())
 
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([operationType])

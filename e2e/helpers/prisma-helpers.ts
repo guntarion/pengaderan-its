@@ -14,6 +14,7 @@ async function getOrCreateTestOrg() {
       name: 'Test Organization HMTC',
       fullName: 'Himpunan Mahasiswa Teknik Komputer (Test)',
       status: OrganizationStatus.ACTIVE,
+      slug: DEFAULT_ORG_CODE.toLowerCase(),
     },
     update: {},
   });

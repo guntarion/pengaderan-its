@@ -16,7 +16,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import { toast } from '@/lib/toast';
 import { createLogger } from '@/lib/logger';
 import { useAuth } from '@/hooks/useAuth';
-import { Users2, CheckCircle2, Calendar } from 'lucide-react';
+import { Users2, CheckCircle2, Calendar, Settings2 } from 'lucide-react';
 
 const log = createLogger('admin-cohort-detail');
 
@@ -143,10 +143,19 @@ export default function CohortDetailPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" onClick={() => router.push('/admin/cohorts')}>
             Kembali
           </Button>
+          {canManage && (
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/admin/cohorts/${params.id}/settings`)}
+            >
+              <Settings2 className="h-4 w-4 mr-2" />
+              Pengaturan
+            </Button>
+          )}
           {canManage && !cohort.isActive && cohort.status !== 'ARCHIVED' && (
             <Button
               className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl"

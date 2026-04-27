@@ -16,7 +16,7 @@
  *   TENANT_ORG_CODE        — default org code (default: HMTC)
  */
 
-import { PrismaClient, PaktaType, PaktaVersionStatus, OrganizationStatus, CohortStatus, UserRole, UserStatus, KPGroupStatus, PairStatus, PairingRequestStatus, PairingRequestType } from '@prisma/client';
+import { PrismaClient, PaktaType, PaktaVersionStatus, OrganizationStatus, OrganizationType, OrganizationRegistrationStatus, CohortStatus, UserRole, UserStatus, KPGroupStatus, PairStatus, PairingRequestStatus, PairingRequestType } from '@prisma/client';
 import { createLogger } from '../src/lib/logger';
 import { seedNotificationTemplates } from './seed/notifications-templates';
 import { seedNotificationRules } from './seed/notifications-rules';
@@ -128,10 +128,18 @@ async function main() {
       facultyCode: 'FTEIC',
       contactEmail: 'hmtc@its.ac.id',
       status: OrganizationStatus.ACTIVE,
+      // REVISI MULTI-HMJ fields
+      slug: TENANT_ORG_CODE.toLowerCase(),
+      organizationType: OrganizationType.HMJ,
+      registrationStatus: OrganizationRegistrationStatus.ACTIVE,
+      isActive: true,
     },
     update: {
       // Do not overwrite name if already set — only update status if needed
       status: OrganizationStatus.ACTIVE,
+      // Ensure multi-HMJ fields are set on re-seed
+      registrationStatus: OrganizationRegistrationStatus.ACTIVE,
+      isActive: true,
     },
   });
 

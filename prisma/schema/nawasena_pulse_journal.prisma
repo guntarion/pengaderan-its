@@ -10,20 +10,20 @@
 // ============================================
 
 enum JournalStatus {
-  SUBMITTED  // submit tepat waktu atau terlambat tapi dalam window Rabu
-  LATE       // submit setelah Minggu 21:00 sebelum Rabu
-  MISSED     // tidak submit sampai Rabu minggu berikutnya (auto-locked)
+  SUBMITTED // submit tepat waktu atau terlambat tapi dalam window Rabu
+  LATE // submit setelah Minggu 21:00 sebelum Rabu
+  MISSED // tidak submit sampai Rabu minggu berikutnya (auto-locked)
 }
 
 enum RubrikScoreStatus {
-  ACTIVE  // score valid (append-only; enum for forward compatibility)
+  ACTIVE // score valid (append-only; enum for forward compatibility)
 }
 
 enum RedFlagStatus {
-  ACTIVE       // alert belum di-follow-up
-  FOLLOWED_UP  // KP sudah catat aksi follow-up
-  ESCALATED    // 48h lewat, di-escalate ke SC
-  RESOLVED     // SC tutup kasus setelah follow-up tuntas
+  ACTIVE // alert belum di-follow-up
+  FOLLOWED_UP // KP sudah catat aksi follow-up
+  ESCALATED // 48h lewat, di-escalate ke SC
+  RESOLVED // SC tutup kasus setelah follow-up tuntas
 }
 
 enum FollowUpContactType {
@@ -42,22 +42,22 @@ model PulseCheck {
   organizationId String
   userId         String
   cohortId       String
-  mood           Int      // 1-5
-  emoji          String   @db.VarChar(8)  // unicode emoji
+  mood           Int // 1-5
+  emoji          String   @db.VarChar(8) // unicode emoji
   comment        String?  @db.VarChar(100)
   recordedAt     DateTime // UTC — waktu submit di client
-  localDate      DateTime @db.Date  // tanggal lokal (Asia/Jakarta atau org timezone)
+  localDate      DateTime @db.Date // tanggal lokal (Asia/Jakarta atau org timezone)
   syncedAt       DateTime @default(now())
-  clientTempId   String?  // UUID dari client queue; untuk dedupe
+  clientTempId   String? // UUID dari client queue; untuk dedupe
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  organization   Organization  @relation("PulseCheckOrg", fields: [organizationId], references: [id])
-  user           User          @relation("UserPulseChecks", fields: [userId], references: [id])
-  cohort         Cohort        @relation("CohortPulseChecks", fields: [cohortId], references: [id])
-  redFlagEvents  RedFlagEvent[] @relation("TriggerPulse")
+  organization  Organization   @relation("PulseCheckOrg", fields: [organizationId], references: [id])
+  user          User           @relation("UserPulseChecks", fields: [userId], references: [id])
+  cohort        Cohort         @relation("CohortPulseChecks", fields: [cohortId], references: [id])
+  redFlagEvents RedFlagEvent[] @relation("TriggerPulse")
 
   @@unique([userId, localDate])
   @@index([organizationId, cohortId, localDate])
@@ -71,24 +71,24 @@ model PulseCheck {
 // ============================================
 
 model JournalDraft {
-  id               String   @id @default(cuid())
-  organizationId   String
-  userId           String
-  cohortId         String
-  weekNumber       Int      // 1-16 untuk cohort 16 minggu
-  whatHappened     String   @default("") @db.Text
-  soWhat           String   @default("") @db.Text
-  nowWhat          String   @default("") @db.Text
-  wordCount        Int      @default(0) // denormalized, update on save
-  clientUpdatedAt  DateTime // timestamp client saat last update
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String
+  cohortId        String
+  weekNumber      Int // 1-16 untuk cohort 16 minggu
+  whatHappened    String   @default("") @db.Text
+  soWhat          String   @default("") @db.Text
+  nowWhat         String   @default("") @db.Text
+  wordCount       Int      @default(0) // denormalized, update on save
+  clientUpdatedAt DateTime // timestamp client saat last update
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  organization     Organization @relation("JournalDraftOrg", fields: [organizationId], references: [id])
-  user             User         @relation("UserJournalDrafts", fields: [userId], references: [id])
-  cohort           Cohort       @relation("CohortJournalDrafts", fields: [cohortId], references: [id])
+  organization Organization @relation("JournalDraftOrg", fields: [organizationId], references: [id])
+  user         User         @relation("UserJournalDrafts", fields: [userId], references: [id])
+  cohort       Cohort       @relation("CohortJournalDrafts", fields: [cohortId], references: [id])
 
   @@unique([userId, cohortId, weekNumber])
   @@index([organizationId, cohortId, weekNumber])
@@ -108,20 +108,20 @@ model Journal {
   whatHappened   String        @db.Text
   soWhat         String        @db.Text
   nowWhat        String        @db.Text
-  wordCount      Int           // final count saat submit
+  wordCount      Int // final count saat submit
   status         JournalStatus @default(SUBMITTED)
   isLate         Boolean       @default(false)
   submittedAt    DateTime
-  weekStartDate  DateTime      @db.Date  // Senin minggu tersebut
-  weekEndDate    DateTime      @db.Date  // Minggu minggu tersebut
+  weekStartDate  DateTime      @db.Date // Senin minggu tersebut
+  weekEndDate    DateTime      @db.Date // Minggu minggu tersebut
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  organization   Organization  @relation("JournalOrg", fields: [organizationId], references: [id])
-  user           User          @relation("UserJournals", fields: [userId], references: [id])
-  cohort         Cohort        @relation("CohortJournals", fields: [cohortId], references: [id])
+  organization Organization @relation("JournalOrg", fields: [organizationId], references: [id])
+  user         User         @relation("UserJournals", fields: [userId], references: [id])
+  cohort       Cohort       @relation("CohortJournals", fields: [cohortId], references: [id])
 
   @@unique([userId, cohortId, weekNumber])
   @@index([organizationId, cohortId, weekNumber, status])
@@ -138,27 +138,27 @@ model Journal {
 model RubrikScore {
   id               String            @id @default(cuid())
   organizationId   String
-  subjectUserId    String            // Maba yang di-score
-  scoredByUserId   String            // KP atau scorer
-  rubrikKey        String            // e.g. "JOURNAL_REFLECTION" (matches M02 Rubrik.rubrikKey)
-  level            Int               // 1-4 (AAC&U levels)
-  rubrikVersionId  String?           // FK to M02 Rubrik.id (nullable if M02 not live)
-  context          Json              // { journalId, weekNumber, cohortId } for JOURNAL_REFLECTION
-  contextKey       String            // denormalized: "${rubrikKey}:${journalId}" for unique enforce
+  subjectUserId    String // Maba yang di-score
+  scoredByUserId   String // KP atau scorer
+  rubrikKey        String // e.g. "JOURNAL_REFLECTION" (matches M02 Rubrik.rubrikKey)
+  level            Int // 1-4 (AAC&U levels)
+  rubrikVersionId  String? // FK to M02 Rubrik.id (nullable if M02 not live)
+  context          Json // { journalId, weekNumber, cohortId } for JOURNAL_REFLECTION
+  contextKey       String // denormalized: "${rubrikKey}:${journalId}" for unique enforce
   comment          String?           @db.Text
   commentUpdatedAt DateTime?
   status           RubrikScoreStatus @default(ACTIVE)
   scoredAt         DateTime          @default(now())
   cohortId         String
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  organization     Organization @relation("RubrikScoreOrg", fields: [organizationId], references: [id])
-  subject          User         @relation("RubrikScoreSubject", fields: [subjectUserId], references: [id])
-  scoredBy         User         @relation("RubrikScoreScoredBy", fields: [scoredByUserId], references: [id])
-  cohort           Cohort       @relation("CohortRubrikScores", fields: [cohortId], references: [id])
+  organization Organization @relation("RubrikScoreOrg", fields: [organizationId], references: [id])
+  subject      User         @relation("RubrikScoreSubject", fields: [subjectUserId], references: [id])
+  scoredBy     User         @relation("RubrikScoreScoredBy", fields: [scoredByUserId], references: [id])
+  cohort       Cohort       @relation("CohortRubrikScores", fields: [cohortId], references: [id])
 
   @@unique([subjectUserId, contextKey])
   @@index([organizationId, rubrikKey, scoredAt(sort: Desc)])
@@ -173,31 +173,31 @@ model RubrikScore {
 // ============================================
 
 model RedFlagEvent {
-  id               String        @id @default(cuid())
-  organizationId   String
-  subjectUserId    String        // Maba
-  kpGroupId        String?       // nullable (null if fallback to SC)
-  notifiedUserId   String        // KP atau SC yang di-notify
-  cohortId         String
-  triggerPulseId   String        // PulseCheck yang memicu
-  pulseSnapshot    Json          // array 3 pulse terakhir: [{mood, emoji, comment, recordedAt, localDate}, ...]
-  status           RedFlagStatus @default(ACTIVE)
-  triggeredAt      DateTime      @default(now())
-  followedUpAt     DateTime?
-  followedUpById   String?
-  escalatedAt      DateTime?
-  resolvedAt       DateTime?
+  id             String        @id @default(cuid())
+  organizationId String
+  subjectUserId  String // Maba
+  kpGroupId      String? // nullable (null if fallback to SC)
+  notifiedUserId String // KP atau SC yang di-notify
+  cohortId       String
+  triggerPulseId String // PulseCheck yang memicu
+  pulseSnapshot  Json // array 3 pulse terakhir: [{mood, emoji, comment, recordedAt, localDate}, ...]
+  status         RedFlagStatus @default(ACTIVE)
+  triggeredAt    DateTime      @default(now())
+  followedUpAt   DateTime?
+  followedUpById String?
+  escalatedAt    DateTime?
+  resolvedAt     DateTime?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  organization     Organization    @relation("RedFlagOrg", fields: [organizationId], references: [id])
-  subject          User            @relation("RedFlagSubject", fields: [subjectUserId], references: [id])
-  notifiedUser     User            @relation("RedFlagNotified", fields: [notifiedUserId], references: [id])
-  cohort           Cohort          @relation("CohortRedFlags", fields: [cohortId], references: [id])
-  triggerPulse     PulseCheck      @relation("TriggerPulse", fields: [triggerPulseId], references: [id])
-  followUps        FollowUpRecord[]
+  organization Organization     @relation("RedFlagOrg", fields: [organizationId], references: [id])
+  subject      User             @relation("RedFlagSubject", fields: [subjectUserId], references: [id])
+  notifiedUser User             @relation("RedFlagNotified", fields: [notifiedUserId], references: [id])
+  cohort       Cohort           @relation("CohortRedFlags", fields: [cohortId], references: [id])
+  triggerPulse PulseCheck       @relation("TriggerPulse", fields: [triggerPulseId], references: [id])
+  followUps    FollowUpRecord[]
 
   @@index([organizationId, cohortId, status, triggeredAt(sort: Desc)])
   @@index([notifiedUserId, status])
@@ -211,23 +211,23 @@ model RedFlagEvent {
 // ============================================
 
 model FollowUpRecord {
-  id               String              @id @default(cuid())
-  organizationId   String
-  redFlagEventId   String
-  actorUserId      String              // yang melakukan follow-up
-  subjectUserId    String              // Maba
-  contactType      FollowUpContactType
-  summary          String              @db.Text  // wajib min 20 char
-  nextAction       String?             @db.Text
-  followedUpAt     DateTime            @default(now())
+  id             String              @id @default(cuid())
+  organizationId String
+  redFlagEventId String
+  actorUserId    String // yang melakukan follow-up
+  subjectUserId  String // Maba
+  contactType    FollowUpContactType
+  summary        String              @db.Text // wajib min 20 char
+  nextAction     String?             @db.Text
+  followedUpAt   DateTime            @default(now())
 
-  createdAt        DateTime @default(now())
+  createdAt DateTime @default(now())
 
   // Relations
-  organization     Organization @relation("FollowUpOrg", fields: [organizationId], references: [id])
-  redFlagEvent     RedFlagEvent @relation(fields: [redFlagEventId], references: [id])
-  actor            User         @relation("FollowUpActor", fields: [actorUserId], references: [id])
-  subject          User         @relation("FollowUpSubject", fields: [subjectUserId], references: [id])
+  organization Organization @relation("FollowUpOrg", fields: [organizationId], references: [id])
+  redFlagEvent RedFlagEvent @relation(fields: [redFlagEventId], references: [id])
+  actor        User         @relation("FollowUpActor", fields: [actorUserId], references: [id])
+  subject      User         @relation("FollowUpSubject", fields: [subjectUserId], references: [id])
 
   @@index([redFlagEventId, followedUpAt(sort: Desc)])
   @@index([organizationId, followedUpAt(sort: Desc)])

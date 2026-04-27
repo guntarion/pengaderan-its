@@ -2,21 +2,27 @@
 
 /**
  * /admin/pakta/new
- * SC admin — publish a new pakta version.
+ * SC admin — publish a new pakta version with dual-scope support.
  * Roles: SC, SUPERADMIN
  *
- * Simple form for MVP — markdown textarea + 5 quiz questions inline.
- * In M15+ this can be replaced with a rich markdown editor.
+ * Dual-scope behavior:
+ *   SOCIAL_CONTRACT_MABA → SUPERADMIN only; organizationId = NULL (global/DIGITAL)
+ *   PAKTA_PANITIA / PAKTA_PENGADER_2027 → ETIK per-HMJ
+ *     - SC: auto-set to own org
+ *     - SUPERADMIN: org dropdown to pick target org
+ *
+ * Phase RV-D — M01 Revisi Multi-HMJ
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { DynamicBreadcrumb } from '@/components/shared/DynamicBreadcrumb';
 import { toast } from '@/lib/toast';
 import { useConfirm } from '@/hooks/useConfirm';
 import { createLogger } from '@/lib/logger';
-import { FilePlus } from 'lucide-react';
+import { FilePlus, Info, Globe, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,14 +33,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const log = createLogger('admin-pakta-new-page');
 
 const PAKTA_TYPES = [
-  { value: 'PAKTA_PANITIA', label: 'Pakta Panitia' },
-  { value: 'SOCIAL_CONTRACT_MABA', label: 'Social Contract MABA' },
-  { value: 'PAKTA_PENGADER_2027', label: 'Pakta Pengader 2027' },
+  { value: 'SOCIAL_CONTRACT_MABA', label: 'Pakta MABA (DIGITAL — Institusi-wide)', superadminOnly: true },
+  { value: 'PAKTA_PANITIA', label: 'Pakta Panitia (ETIK — Per-HMJ)', superadminOnly: false },
+  { value: 'PAKTA_PENGADER_2027', label: 'Pakta Pengader 2027 (ETIK — Per-HMJ)', superadminOnly: false },
 ] as const;
+
+type PaktaTypeValue = (typeof PAKTA_TYPES)[number]['value'];
+
+interface OrgSummary {
+  id: string;
+  code: string;
+  name: string;
+}
 
 interface QuizOption {
   id: string;
@@ -64,13 +79,18 @@ function emptyQuestion(idx: number): QuizQuestion {
 
 export default function AdminPaktaNewPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const { confirm, ConfirmDialog } = useConfirm();
 
-  const [paktaType, setPaktaType] = useState<string>('');
+  const userRole = session?.user?.role ?? '';
+  const isSuperadmin = userRole === 'SUPERADMIN';
+  const userOrgId = session?.user?.organizationId ?? '';
+
+  const [paktaType, setPaktaType] = useState<PaktaTypeValue | ''>('');
   const [title, setTitle] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState(
-    new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+    new Date().toISOString().slice(0, 10)
   );
   const [passingScore, setPassingScore] = useState(80);
   const [questions, setQuestions] = useState<QuizQuestion[]>([
@@ -81,6 +101,32 @@ export default function AdminPaktaNewPage() {
     emptyQuestion(4),
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Organization selection (SUPERADMIN only for ETIK types)
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
+  const [orgs, setOrgs] = useState<OrgSummary[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(false);
+
+  const isDigitalType = paktaType === 'SOCIAL_CONTRACT_MABA';
+  const isEtikType = paktaType === 'PAKTA_PANITIA' || paktaType === 'PAKTA_PENGADER_2027';
+
+  // Load orgs when SUPERADMIN selects ETIK type
+  useEffect(() => {
+    if (!isSuperadmin || !isEtikType) return;
+    if (orgs.length > 0) return; // already loaded
+    setOrgsLoading(true);
+    fetch('/api/admin/organizations')
+      .then((r) => r.json())
+      .then((json) => {
+        setOrgs((json.data ?? []).map((o: { id: string; code: string; name: string }) => ({
+          id: o.id,
+          code: o.code,
+          name: o.name,
+        })));
+      })
+      .catch(() => log.warn('Failed to load organizations for dropdown'))
+      .finally(() => setOrgsLoading(false));
+  }, [isSuperadmin, isEtikType, orgs.length]);
 
   const updateQuestion = (idx: number, field: keyof QuizQuestion, value: unknown) => {
     setQuestions((prev) =>
@@ -105,9 +151,14 @@ export default function AdminPaktaNewPage() {
   };
 
   const handlePublish = async () => {
-    // Validate
     if (!paktaType || !title || contentMarkdown.length < 100) {
       toast.error('Lengkapi semua field (konten minimal 100 karakter)');
+      return;
+    }
+
+    // Validate org selection for ETIK types
+    if (isEtikType && isSuperadmin && !selectedOrgId) {
+      toast.error('Pilih HMJ target untuk Pakta ETIK');
       return;
     }
 
@@ -127,30 +178,49 @@ export default function AdminPaktaNewPage() {
       }
     }
 
+    // Build scope description for confirm dialog
+    let scopeDesc = '';
+    if (isDigitalType) {
+      scopeDesc = 'Pakta DIGITAL ini berlaku institusi-wide. Semua MABA aktif di seluruh HMJ akan diminta tanda tangan ulang.';
+    } else if (isEtikType) {
+      if (isSuperadmin && selectedOrgId) {
+        const org = orgs.find((o) => o.id === selectedOrgId);
+        scopeDesc = `Pakta ETIK ini hanya berlaku untuk HMJ ${org?.code ?? selectedOrgId}. Hanya panitia di org tersebut yang akan diminta re-sign.`;
+      } else {
+        scopeDesc = 'Pakta ETIK ini berlaku untuk HMJ Anda. Panitia aktif di org ini akan diminta tanda tangan ulang.';
+      }
+    }
+
     const confirmed = await confirm({
       title: 'Terbitkan Versi Pakta?',
-      description:
-        'Versi baru akan diterbitkan. Jika ada versi aktif sebelumnya, semua penanda tangan lama akan diminta menandatangani ulang.',
+      description: `${scopeDesc} Jika ada versi aktif sebelumnya, semua penanda tangan lama akan diminta menandatangani ulang.`,
       confirmLabel: 'Ya, Terbitkan',
       variant: 'destructive',
     });
     if (!confirmed) return;
 
     setIsSubmitting(true);
-    log.info('Publishing pakta version', { paktaType, title });
+    log.info('Publishing pakta version', { paktaType, title, selectedOrgId });
 
     try {
+      const body: Record<string, unknown> = {
+        type: paktaType,
+        title,
+        contentMarkdown,
+        quizQuestions: questions,
+        effectiveFrom: new Date(effectiveFrom).toISOString(),
+        passingScore,
+      };
+
+      // Add organizationId for SUPERADMIN selecting a specific org
+      if (isSuperadmin && isEtikType && selectedOrgId) {
+        body.organizationId = selectedOrgId;
+      }
+
       const res = await fetch('/api/admin/pakta/versions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: paktaType,
-          title,
-          contentMarkdown,
-          quizQuestions: questions,
-          effectiveFrom: new Date(effectiveFrom).toISOString(),
-          passingScore,
-        }),
+        body: JSON.stringify(body),
       });
 
       const json = await res.json();
@@ -171,6 +241,11 @@ export default function AdminPaktaNewPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Filter type options based on role
+  const availableTypes = PAKTA_TYPES.filter(
+    (t) => isSuperadmin || !t.superadminOnly
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-sky-100 dark:from-gray-950 dark:via-blue-950/20 dark:to-gray-950 p-6">
@@ -201,12 +276,18 @@ export default function AdminPaktaNewPage() {
           {/* Type */}
           <div className="space-y-1.5">
             <Label>Tipe Pakta</Label>
-            <Select value={paktaType} onValueChange={setPaktaType}>
+            <Select
+              value={paktaType}
+              onValueChange={(v) => {
+                setPaktaType(v as PaktaTypeValue);
+                setSelectedOrgId('');
+              }}
+            >
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Pilih tipe pakta..." />
               </SelectTrigger>
               <SelectContent>
-                {PAKTA_TYPES.map((t) => (
+                {availableTypes.map((t) => (
                   <SelectItem key={t.value} value={t.value}>
                     {t.label}
                   </SelectItem>
@@ -214,6 +295,61 @@ export default function AdminPaktaNewPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Scope info / org selection */}
+          {isDigitalType && (
+            <Alert className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
+              <Globe className="h-4 w-4 text-blue-500" />
+              <AlertDescription className="text-blue-700 dark:text-blue-400 text-sm">
+                <strong>Pakta DIGITAL (Institusi-wide)</strong> — berlaku untuk semua MABA aktif di seluruh HMJ.
+                Saat diterbitkan, semua MABA aktif akan diminta tanda tangan ulang.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isEtikType && (
+            <div className="space-y-3">
+              <Alert className="border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/20">
+                <Building2 className="h-4 w-4 text-violet-500" />
+                <AlertDescription className="text-violet-700 dark:text-violet-400 text-sm">
+                  <strong>Pakta ETIK (Per-HMJ)</strong> — hanya berlaku untuk panitia di HMJ tertentu.
+                </AlertDescription>
+              </Alert>
+
+              {/* Org selection: SUPERADMIN picks org, SC sees own */}
+              {isSuperadmin ? (
+                <div className="space-y-1.5">
+                  <Label>Target HMJ</Label>
+                  <Select
+                    value={selectedOrgId}
+                    onValueChange={setSelectedOrgId}
+                    disabled={orgsLoading}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder={orgsLoading ? 'Memuat daftar HMJ...' : 'Pilih HMJ target...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {orgs.map((o) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.code} — {o.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-400">
+                    Pilih HMJ yang akan menerima Pakta ETIK ini.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-4 py-3 flex items-center gap-2">
+                  <Info className="h-4 w-4 text-gray-400" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Pakta ETIK ini akan otomatis ditujukan ke HMJ Anda ({userOrgId ? 'org Anda' : '—'}).
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Title */}
           <div className="space-y-1.5">
@@ -227,7 +363,7 @@ export default function AdminPaktaNewPage() {
             />
           </div>
 
-          {/* Effective from */}
+          {/* Effective from + passing score */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="effectiveFrom">Berlaku Mulai</Label>

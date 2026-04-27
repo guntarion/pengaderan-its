@@ -323,31 +323,31 @@ ALTER TABLE "passport_skem_export_logs" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY passport_entry_org_isolation ON "passport_entries"
   FOR ALL
   USING (
-    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid
+    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::text
     OR current_setting('app.bypass_rls', true) = 'true'
-    OR "userId" = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-    OR "verifierId" = NULLIF(current_setting('app.current_user_id', true), '')::uuid
-    OR "escalatedToUserId" = NULLIF(current_setting('app.current_user_id', true), '')::uuid
+    OR "userId" = NULLIF(current_setting('app.current_user_id', true), '')::text
+    OR "verifierId" = NULLIF(current_setting('app.current_user_id', true), '')::text
+    OR "escalatedToUserId" = NULLIF(current_setting('app.current_user_id', true), '')::text
   );
 
 CREATE POLICY passport_evidence_upload_org_isolation ON "passport_evidence_uploads"
   FOR ALL
   USING (
-    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid
+    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::text
     OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 CREATE POLICY passport_qr_session_org_isolation ON "passport_qr_sessions"
   FOR ALL
   USING (
-    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid
+    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::text
     OR current_setting('app.bypass_rls', true) = 'true'
   );
 
 CREATE POLICY passport_skem_export_log_org_isolation ON "passport_skem_export_logs"
   FOR ALL
   USING (
-    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid
+    "organizationId" = NULLIF(current_setting('app.current_org_id', true), '')::text
     OR current_setting('app.bypass_rls', true) = 'true'
   );
 
@@ -407,5 +407,5 @@ ALTER TABLE "passport_skem_export_logs" ADD CONSTRAINT "passport_skem_export_log
 ALTER TABLE "passport_skem_export_logs" ADD CONSTRAINT "passport_skem_export_logs_cohortId_fkey" FOREIGN KEY ("cohortId") REFERENCES "cohorts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "passport_skem_export_logs" ADD CONSTRAINT "passport_skem_export_logs_generatedByUserId_fkey" FOREIGN KEY ("generatedByUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- Unique constraint added by M04
-CREATE UNIQUE INDEX "users_organizationId_nrp_key" ON "users"("organizationId", "nrp");
+-- Unique constraint added by M04 (foundation migration already created this with WHERE clause; skip if exists)
+CREATE UNIQUE INDEX IF NOT EXISTS "users_organizationId_nrp_key" ON "users"("organizationId", "nrp");

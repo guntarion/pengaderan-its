@@ -37,9 +37,11 @@ export const GET = createApiHandler({
       throw ForbiddenError('Tidak dapat mengakses pakta dari organisasi lain');
     }
 
+    // For DIGITAL pakta (organizationId IS NULL), signatures always have the signer's org
+    // So we filter by versionId only (RLS handles org isolation for per-org pakta)
     const where = {
       paktaVersionId: versionId,
-      organizationId: version.organizationId,
+      ...(version.organizationId !== null ? { organizationId: version.organizationId } : {}),
     };
 
     const [signatures, total] = await Promise.all([
